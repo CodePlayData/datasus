@@ -87,7 +87,6 @@ export class JobOrchestrator<
 
         for await (let file of this._files) {
             if(this.output === 'file') console.log(`Downloading ${file}...`)
-            console.log(this.resolvedDataPath + file)
             await this.gateway.get(file, this.resolvedDataPath + file)
             if(this.output === 'file') console.log(`Download of ${file} completed.`)
         }
