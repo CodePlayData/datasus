@@ -121,7 +121,7 @@ const BIDictionary = new Map<string, (value: any) => any> ([
     }]
 ]);
 const filters = new Map<string, string | string[]>();
-// filters.set('MUNPAC', "330455");
+filters.set('MUNPAC', "330055");
 
 const sia = SIASUSService.init(
     gateway,
@@ -143,7 +143,7 @@ await sia.subset({
         },
         end: {
             year: 2022,
-            month: '03'
+            month: '04'
         }
     }
 }, parser)

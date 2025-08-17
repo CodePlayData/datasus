@@ -16,7 +16,15 @@
     limitations under the License.
 */
 
+/**
+ * Simple command pattern contract used across the infra layer.
+ *
+ * Implementations may expose init and/or exec methods to standardize
+ * creation and execution flows.
+ */
 export interface Command {
+    /** Optional factory-like initializer. */
     init?(...params: any[]): any
+    /** Optional execution entry point. */
     exec?(...params: any[]): any
 }

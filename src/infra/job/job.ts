@@ -20,6 +20,10 @@
 import {JobProcessor} from "./JobProcessor.js";
 import {JobMessage} from "./JobMessage.js";
 
+/**
+ * Worker entry script. It instantiates a JobProcessor and wires basic process
+ * error handlers for uncaught exceptions and unhandled rejections.
+ */
 class UncaughtException extends Error {
     constructor(pid: string, error: Error) {
         super(`[ERROR]: Process ${ pid } has this uncaught exception: ${ error.message }`)
@@ -27,11 +31,17 @@ class UncaughtException extends Error {
         this.cause = 'Uncaught exception.'
     }
 
+    /**
+     * Throws an UncaughtException with standardized message.
+     */
     static exception(file: string, error: Error) {
         throw new UncaughtException(file, error)
     }
 }
 
+/**
+ * Error used to signal that a promise was rejected without a catch handler.
+ */
 class UnhandledRejection extends Error {
     constructor(pid: string, reason: unknown) {
         super(`[ERROR]: Process ${ pid } has a promise not resolved: ${ reason }`)
@@ -39,6 +49,9 @@ class UnhandledRejection extends Error {
         this.cause = 'The process has a promise not resolved.'
     }
 
+    /**
+     * Throws an UnhandledRejection with standardized message.
+     */
     static exception(file: string, reason: unknown) {
         throw new UnhandledRejection(file, reason)
     }

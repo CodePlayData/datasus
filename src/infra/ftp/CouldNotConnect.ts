@@ -16,13 +16,24 @@
  limitations under the License.
  */
 
+/**
+ * Error thrown when a connection to the FTP server cannot be established.
+ */
 export class CouldNotConnect extends Error {
+    /**
+     * Use CouldNotConnect.exception to throw the standardized exception.
+     * @param message Optional message with error details.
+     */
     private constructor(message?: string) {
         super(message || `Some connection error ocurred.`)
         this.name = 'CouldNotConnect';
         this.cause = 'There is no particulary reason except that the connection could not complete.'
     }
 
+    /**
+     * Throws the CouldNotConnect exception, standardizing the flow.
+     * @param message Optional message.
+     */
     static exception(message?: string) {
         throw new CouldNotConnect(message)
     }

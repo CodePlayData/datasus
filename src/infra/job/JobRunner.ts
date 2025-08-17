@@ -22,15 +22,34 @@ import {JobMessage} from "./JobMessage.js";
 import {Parser} from "../../interface/utils/Parser.js";
 import {Records} from "../../core/Records.js";
 
+/**
+ * Responsible for forking and supervising a worker process (job script).
+ *
+ * It forwards messages to the child process and resolves when the child exits.
+ * Optionally, it applies a parser and invokes a callback for each emitted record.
+ */
 export class JobRunner implements Command {
+    /**
+     * @param jobScript Absolute or relative path to the worker script to be forked.
+     */
     private constructor(private jobScript: string) {
     }
 
+    /**
+     * Factory method for creating a JobRunner bound to a script.
+     */
     static init(jobScript: string) {
         return new JobRunner(jobScript)
     }
 
-    async exec(jobMsg: JobMessage, callback?: Function, parser?: Parser<Records>) {
+    /**
+     * Starts the child process and wires IPC events.
+     * @param jobMsg Message sent to the child to start processing.
+     * @param callback Optional callback invoked per record/message from the child.
+     * @param parser Optional parser to transform each record before callback.
+     * @param progressCallback Optional callback for progress updates from the child.
+     */
+    async exec(jobMsg: JobMessage, callback?: Function, parser?: Parser<Records>, progressCallback?: Function) {
         return new Promise((resolve, reject) => {
             const child: ChildProcess = fork(this.jobScript);
             child.on('exit', (code, signal) => {
@@ -39,14 +58,28 @@ export class JobRunner implements Command {
                 }
                 resolve(true)
             });
-
-            child.on('message', (msg: string) => {
+            child.on('message', (msg: any) => {
+                const isTypedEvent = msg && typeof msg === 'object' && 'type' in msg;
+                if (isTypedEvent) {
+                    if (msg.type === 'progress') {
+                        if (progressCallback) {
+                            progressCallback(msg);
+                        } else if (typeof msg.pct === 'number') {
+                            const file = msg.file || jobMsg.file;
+                            const processed = msg.processed ?? '?';
+                            const total = msg.total ?? '?';
+                            process.stdout.write(`[child ${msg.pid ?? ''}] ${file}: ${msg.pct}% (${processed}/${total})\r`);
+                            if (msg.pct === 100) process.stdout.write('\n');
+                        }
+                    }
+                } else {
+                    if (callback) callback(msg);
+                }
                 const parsedMsg = parser ? parser.parse(msg as unknown as Records) : msg;
                 if(callback) {
                     callback(parsedMsg)
                 }
             });
-
             child.send(jobMsg);
         })
     }

@@ -23,6 +23,9 @@ import {Parser} from "../../interface/utils/Parser.js";
 import {Records} from "../../core/Records.js";
 import {DataSource} from "../../core/Datasource.js";
 
+/**
+ * Error thrown when a job could not be scheduled for execution.
+ */
 class FailToScheduleJob extends Error {
     constructor() {
         super(`The job could not be scheduled.`)
@@ -35,21 +38,48 @@ class FailToScheduleJob extends Error {
     }
 }
 
+/**
+ * Schedules and orchestrates the execution of jobs (child processes) over a chunk of files.
+ *
+ * It recursively schedules executions until the chunk is fully processed, forwarding
+ * criteria, output options, and optional callback/parser to the JobRunner.
+ */
 export class JobScheduler<D extends DataSource> implements Command {
     private filesProcessed: number = 0;
+    /**
+     * @param MAX_CONCURRENT_PROCESSES Unused here but kept for API symmetry with orchestrator.
+     * @param criteria Optional criteria applied by JobProcessor when filtering records.
+     * @param DATA_PATH Base path used by children to read/write data files.
+     */
     private constructor(readonly MAX_CONCURRENT_PROCESSES:number = 2, readonly criteria?: Map<string, string | string[]>, readonly DATA_PATH?: string) {
     }
 
+    /**
+     * Factory method to create a scheduler.
+     */
     static init(MAX_CONCURRENT_PROCESSES?:number, criteria?: Map<string, string | string[]>, DATA_PATH?: string) {
         return new JobScheduler(MAX_CONCURRENT_PROCESSES, criteria, DATA_PATH)
     }
 
+    /**
+     * Increments the internal counter of processed files.
+     * @param qnt How many files to add (default 1).
+     */
     incrementFilesProcessed(qnt: number = 1) {
         this.filesProcessed = this.filesProcessed + qnt;
         return this.filesProcessed
     }
 
     // O SIADatasource é a única coisa que identifica. Talvez tenha que vir por Generics.
+    /**
+     * Executes the scheduling cycle for the given chunk.
+     * @param chunk List of files (or messages) to process.
+     * @param output Output destination of child processing ('stdout' | 'file').
+     * @param jobScript Path to the worker script to fork.
+     * @param dataSource Optional dataset identifier, forwarded to child.
+     * @param callback Optional callback invoked for each processed record.
+     * @param parser Optional parser to transform each emitted record.
+     */
     async exec(chunk: string[] | JobMessage[], output: 'stdout' | 'file' = 'file', jobScript: string, dataSource?: D, callback?: Function, parser?: Parser<Records>): Promise<void> {
         const criteriaObj = this.criteria ? Object.fromEntries(this.criteria) : undefined;
 

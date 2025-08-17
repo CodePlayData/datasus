@@ -18,7 +18,16 @@
 
 import {Records} from "../../core/Records.js";
 
+/**
+ * Contract for parsing/transforming emitted records.
+ *
+ * A parser may expose a dictionary mapping field name to transformation
+ * functions and must implement a parse method that returns the transformed
+ * record instance.
+ */
 export interface Parser<R extends Records> {
+    /** Map of field -> transformer function. */
     dictionary: Map<string, (value: any) => any>;
+    /** Parses and returns a possibly transformed record. */
     parse(record: R): R
 }

@@ -19,7 +19,23 @@
 
 import {Subset} from "../../core/Subset.js";
 
+/**
+ * Contract for gateway implementations that list and download DATASUS files.
+ *
+ * Implementations may filter by subset (src, states, period, etc.) and return
+ * either raw FTP entries ("full") or file names ("short").
+ */
 export interface DATASUSGateway<S extends Subset> {
+    /**
+     * Lists dataset files from the remote source.
+     * @param subset Filter options and data source identifier.
+     * @param display "short" to return only filenames; "full" to return raw entries.
+     */
     list(subset: S, display: 'short' | 'full'): Promise<string[]> | Promise<{ [key: string]: any }[]>
+    /**
+     * Downloads a file to a local destination.
+     * @param file Remote filename.
+     * @param dest Optional local path/filename.
+     */
     get(file: string, dest?: string): Promise<any>
 }

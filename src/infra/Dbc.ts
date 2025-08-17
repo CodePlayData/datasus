@@ -22,10 +22,22 @@ import {parse} from "node:path";
 import {DBFFile, FieldDescriptor} from 'dbffile';
 import { dbc2dbf } from "@codeplaydata/dbc2dbf"
 
+/**
+ * Wrapper around dbffile to handle DATASUS DBC files conversion and reading.
+ *
+ * It converts the .dbc file to a temporary .dbf (using @codeplaydata/dbc2dbf),
+ * exposes basic metadata (record count and fields) and provides iteration helpers.
+ */
 export class Dbc {
+    /** Total number of records in the dataset. */
     size!: number;
+    /** Field descriptors as reported by dbffile. */
     fields!: FieldDescriptor[];
 
+    /**
+     * @param dbf Opened DBFFile instance.
+     * @param io Input/output paths used for conversion and temp file storage.
+     */
     private constructor(readonly dbf: DBFFile, private readonly io: { input: string, output: string}) {
         this.size = dbf.recordCount;
         this.fields = dbf.fields;
@@ -35,6 +47,11 @@ export class Dbc {
         } */
     }
 
+    /**
+     * Loads a .dbc file, converting it to a temporary .dbf if necessary.
+     * @param inputFile Full path to the .dbc file.
+     * @returns A ready-to-use Dbc wrapper instance.
+     */
     static async load(inputFile: string) {
         const inputFilePath = parse(inputFile);
         const io = {
@@ -52,10 +69,17 @@ export class Dbc {
         return new Dbc(dbf, io)
     }
 
+    /**
+     * Reads a batch of records from the DBF.
+     * @param count Optional number of records to read (defaults to all records).
+     */
     async readBatch(count?: number): Promise<Record<string, unknown>[]> {
         return await this.dbf.readRecords(count || this.size)
     }
 
+    /**
+     * Deletes the temporary .dbf file created during conversion.
+     */
     remove(): void {
         const inputFilePath = parse(this.io.input);
         unlink(this.io.output, (error: any) => {
@@ -64,6 +88,10 @@ export class Dbc {
         });
     }
 
+    /**
+     * Iterates through each record asynchronously, invoking the callback.
+     * @param callback Async function receiving each record.
+     */
     async forEachRecords(callback: (record: any) => Promise<any>) {
         for await (let record of this.dbf) {
             await callback(record)
@@ -71,6 +99,9 @@ export class Dbc {
     }
 }
 
+/**
+ * Error thrown when the temporary .dbf file cannot be removed.
+ */
 export class CanNotExcludeDbcFile extends Error {
     constructor(file: string) {
         super(`A error occurred when deleting file: ${ file }`)

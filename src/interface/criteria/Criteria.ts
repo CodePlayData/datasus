@@ -16,10 +16,22 @@
     limitations under the License.
 */
 
+/**
+ * Generic contract for record filtering criteria.
+ *
+ * Implementations decide whether a given record matches a condition and may
+ * expose a human-readable name and optional backing values (str/array).
+ */
 export interface Criteria<T> {
+    /** Identifier used for logging/summary, usually "<field>_FILTER". */
     name: string;
+    /** Optional string value used by simple criteria implementations. */
     str?: string;
+    /** Optional array of values used by multi-value criteria implementations. */
     array?: string[];
+    /**
+     * Returns true if the provided record satisfies the criterion.
+     */
     match(record: T): boolean;
 }
 

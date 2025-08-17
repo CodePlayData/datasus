@@ -19,9 +19,25 @@
 import {FTPClient} from "../../infra/ftp/FTPClient.js";
 import {Subset} from "../../core/Subset.js";
 
+/**
+ * Generic gateway for accessing the DATASUS public FTP.
+ *
+ * This abstract class provides a common list and downloads operations from a base
+ * path (PATH) using an injected FTP client. Specific strategies (e.g., SIA,
+ * SIH, etc.) should extend this class.
+ */
 export abstract class DATASUSGenericFTPGateway<S extends Subset> {
+    /**
+     * @param client FTP client implementation.
+     * @param PATH Base path on the FTP where dataset files are located.
+     */
     constructor(readonly client: FTPClient, readonly PATH: string) {}
 
+    /**
+     * Lists files under the base directory applying optional filters for states and period.
+     * @param input Subset (src) and, optionally, states and period (YYYY-MM).
+     * @param display 'full' returns the full FTP entry objects, 'short' returns only filenames.
+     */
     async list(input: S , display: 'full' | 'short' = 'full') {
         let list = await this.client.list(this.PATH);
         let seq = [];
@@ -68,6 +84,11 @@ export abstract class DATASUSGenericFTPGateway<S extends Subset> {
             list.filter((i: { name: string; }) => i.name.startsWith(input.src)).map((item: { name: any; }) => item.name)
     }
 
+    /**
+     * Downloads a file from the FTP using the configured PATH as base.
+     * @param file Remote filename (relative to PATH).
+     * @param dest Optional local path; if not provided, uses the same filename.
+     */
     async get(file: string, dest?: string) {
         return await this.client?.download(dest || file, this.PATH+file);
     }

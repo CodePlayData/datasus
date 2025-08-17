@@ -20,6 +20,15 @@
 
 import {DataSource} from "../../core/Datasource.js";
 
+/**
+ * Message sent from the scheduler to the worker process to start a job.
+ *
+ * - src: dataset identifier (optional) to inform the worker which domain it belongs to;
+ * - file: target filename to be processed (relative to dataPath);
+ * - criteria: filters applied when reading records;
+ * - output: where to emit records ('stdout' | 'file');
+ * - dataPath: base path where the file resides and where outputs are written.
+ */
 export type JobMessage = {
     src: DataSource | undefined,
     file: string,

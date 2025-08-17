@@ -24,6 +24,7 @@ import {ArrayCriteria} from "../../interface/criteria/ArrayCriteria.js";
 import {StringCriteria} from "../../interface/criteria/StringCriteria.js";
 import {Records} from "../../core/Records.js";
 
+/** Error thrown when a single record cannot be processed. */
 class ProcessRecordFailed extends Error {
     constructor() {
         super(`[ERROR]: Could not process record.`)
@@ -36,6 +37,7 @@ class ProcessRecordFailed extends Error {
     }
 }
 
+/** Error thrown when the cleanup step cannot be completed. */
 class CouldNotCleanUp extends Error {
     constructor() {
         super(`[ERROR]: The cleanup process could not be completed.`)
@@ -49,11 +51,20 @@ class CouldNotCleanUp extends Error {
 }
 
 
+/**
+ * Worker-side processor that reads a DBC/DBF file and emits records.
+ *
+ * It loads criteria from the message, optionally filters records, and for each
+ * record it either prints to stdout or appends to a file, updating a summary.
+ */
 export class JobProcessor {
     private summary: JobSummary;
     private dbc: Dbc | null;
     private msg: JobMessage;
 
+    /**
+     * @param msg Job message containing file, output, criteria and data path.
+     */
     constructor(msg: JobMessage) {
         this.msg = msg;
         this.dbc = null;
@@ -68,6 +79,9 @@ export class JobProcessor {
         };
     }
 
+    /**
+     * Processes one record according to the configured output mode.
+     */
     private async handleRecord(record: Records): Promise<void> {
         try {
             switch (this.msg.output) {
@@ -87,6 +101,9 @@ export class JobProcessor {
         }
     }
 
+    /**
+     * Appends the record as JSON to the data.json file in the given data path.
+     */
     private async writeToFile(record: Records): Promise<void> {
         return new Promise((resolve, reject) => {
             appendFile(this.msg.dataPath + 'data.json', JSON.stringify(record), (error) => {
@@ -103,6 +120,9 @@ export class JobProcessor {
         });
     }
 
+    /**
+     * Builds Criteria objects from the message structure.
+     */
     private loadCriteriaFromMsg() {
         const criteria: Criteria<any>[] = [];
 
@@ -124,13 +144,35 @@ export class JobProcessor {
         return criteria;
     }
 
+    /**
+     * Main workflow: open file, iterate records, filter/emit, finalize and cleanup.
+     */
     public async process(): Promise<void> {
         try {
             await this.initialize();
-            const criteria = this.loadCriteriaFromMsg(); // o erro está aqui
-
+            const criteria = this.loadCriteriaFromMsg();
+            const total = this.summary.total || 0;
+            let processed = 0;
+            let lastPct = -1;
+            const step = 1; // percent granularity
+            const emitProgress = () => {
+                if (total <= 0) return;
+                const pct = Math.floor((processed / total) * 100);
+                if (pct !== lastPct && pct % step === 0) {
+                    // @ts-ignore
+                    process.send?.({ type: 'progress', pct, processed, total, file: this.msg.file, pid: process.pid });
+                    lastPct = pct;
+                }
+            };
+            if (total > 0) {
+                // @ts-ignore
+                process.send?.({ type: 'progress', pct: 0, processed: 0, total, file: this.msg.file, pid: process.pid });
+            }
             await this.dbc!.forEachRecords(async (record: Records) => {
                 try {
+                    processed++;
+                    emitProgress();
+
                     if (!this.msg.criteria || criteria?.every(criteria => criteria?.match(record))) {
                         await this.handleRecord(record);
                     }
@@ -138,6 +180,10 @@ export class JobProcessor {
                     ProcessRecordFailed.exception()
                 }
             });
+            if (total > 0 && processed >= total) {
+                // @ts-ignore
+                process.send?.({ type: 'progress', pct: 100, processed, total, file: this.msg.file, pid: process.pid });
+            }
             await this.finalize();
         } catch (_) {
             ProcessFatal.exception(process.pid.toString());
@@ -145,6 +191,9 @@ export class JobProcessor {
         }
     }
 
+    /**
+     * Opens the DBC (converting to DBF if needed) and logs initial info.
+     */
     private async initialize(): Promise<void> {
         try {
             this.dbc = await Dbc.load(this.msg.dataPath + this.msg.file);
@@ -158,6 +207,9 @@ export class JobProcessor {
         }
     }
 
+    /**
+     * Writes a summary and performs final cleanup.
+     */
     private async finalize(): Promise<void> {
         try {
             appendFileSync(`${this.msg.dataPath}summary.json`, JSON.stringify(this.summary));
@@ -174,6 +226,9 @@ export class JobProcessor {
         }
     }
 
+    /**
+     * Ensures temporary files are removed and the process exits with the right code.
+     */
     private async cleanup(exitCode: number): Promise<void> {
         try {
             if (this.dbc) {

@@ -1,6 +1,6 @@
 {
   "name": "@codeplaydata/datasus",
-  "version": "1.0.14",
+  "version": "1.0.19",
   "main": "index.js",
   "type": "module",
   "scripts": {

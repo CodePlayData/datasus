@@ -16,6 +16,9 @@
     limitations under the License.
 */
 
+/**
+ * Error used to signal that a worker process terminated with a fatal error.
+ */
 class ProcessFatal extends Error {
     constructor(pid: string, error?: Error) {
         super(`[ERROR]: Process ${ pid } closed with error: ${ error?.name }`)
@@ -23,6 +26,11 @@ class ProcessFatal extends Error {
         this.cause = 'The process closed with an error probably incomplete.'
     }
 
+    /**
+     * Throws a standardized ProcessFatal error.
+     * @param file The process id or file identifier.
+     * @param error Optional nested error.
+     */
     static exception(file: string, error?: Error) {
         throw new ProcessFatal(file, error)
     }

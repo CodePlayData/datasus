@@ -19,12 +19,20 @@
 import {Records} from "../../core/Records.js";
 import {Criteria} from "./Criteria.js";
 
+/**
+ * Criteria that matches when a record's property equals an expected string.
+ */
 export class StringCriteria<RecordType extends Records> implements Criteria<RecordType> {
     readonly name: string;
+    /**
+     * @param str Expected value.
+     * @param objProp Record property to compare.
+     */
     constructor(readonly str: string, readonly objProp: string) {
         this.name = objProp + '_FILTER';
     }
 
+    /** Returns true if item[objProp] strictly equals the expected string. */
     match(item: RecordType): boolean {
         return item[this.objProp] === this.str
     }

@@ -19,12 +19,20 @@
 import {Records} from "../../core/Records.js";
 import {Criteria} from "./Criteria.js";
 
+/**
+ * Criteria that matches when a record's property value is contained in a list.
+ */
 export class ArrayCriteria<RecordType extends Records> implements Criteria<RecordType> {
     readonly name: string;
+    /**
+     * @param array Allowed values.
+     * @param objProp Record property to compare.
+     */
     constructor(readonly array: string[], readonly objProp: string) {
         this.name = objProp + '_FILTER';
     }
 
+    /** Returns true if item[objProp] is included in the provided array. */
     match(item: RecordType): boolean {
         return this.array.includes(item[this.objProp])
     }
