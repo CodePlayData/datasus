@@ -121,13 +121,13 @@ const BIDictionary = new Map<string, (value: any) => any> ([
     }]
 ]);
 const filters = new Map<string, string | string[]>();
-filters.set('MUNPAC', "330055");
+filters.set('CBOPROF', "223293");
 
 const sia = SIASUSService.init(
     gateway,
     filters,
-    undefined,
-    'stdout',
+    (msg: any) => console.log(msg),
+    'file',
     MAX_CONCURRENT_PROCESSES
 );
 
@@ -139,7 +139,7 @@ await sia.subset({
     period: {
         start: {
             year: 2022,
-            month: '03'
+            month: '04'
         },
         end: {
             year: 2022,
