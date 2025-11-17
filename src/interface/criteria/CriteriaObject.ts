@@ -1,4 +1,4 @@
-// @filename: JobSummary.ts
+// @filename: CriteriaObject.ts
 
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
@@ -16,13 +16,6 @@
     limitations under the License.
 */
 
-import {CriteriaObject} from "../../interface/criteria/CriteriaObject.js";
-
-export interface JobSummary {
-    pid: number;
-    file: string;
-    total: number;
-    founds: number;
-    errors: number;
-    filters?: CriteriaObject[];
-}
+export type CriteriaObject =
+    | { type: 'string'; prop: string; value: string }
+    | { type: 'array';  prop: string; value: string[] };

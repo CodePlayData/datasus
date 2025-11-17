@@ -22,6 +22,7 @@ import {JobMessage} from "./JobMessage.js";
 import {Parser} from "../../interface/utils/Parser.js";
 import {Records} from "../../core/Records.js";
 import {DataSource} from "../../core/Datasource.js";
+import {CriteriaObject} from "../../interface/criteria/CriteriaObject.js";
 
 /**
  * Error thrown when a job could not be scheduled for execution.
@@ -51,13 +52,13 @@ export class JobScheduler<D extends DataSource> implements Command {
      * @param criteria Optional criteria applied by JobProcessor when filtering records.
      * @param DATA_PATH Base path used by children to read/write data files.
      */
-    private constructor(readonly MAX_CONCURRENT_PROCESSES:number = 2, readonly criteria?: Map<string, string | string[]>, readonly DATA_PATH?: string) {
+    private constructor(readonly MAX_CONCURRENT_PROCESSES:number = 2, readonly criteria?: CriteriaObject[], readonly DATA_PATH?: string) {
     }
 
     /**
      * Factory method to create a scheduler.
      */
-    static init(MAX_CONCURRENT_PROCESSES?:number, criteria?: Map<string, string | string[]>, DATA_PATH?: string) {
+    static init(MAX_CONCURRENT_PROCESSES?:number, criteria?: CriteriaObject[], DATA_PATH?: string) {
         return new JobScheduler(MAX_CONCURRENT_PROCESSES, criteria, DATA_PATH)
     }
 
@@ -79,34 +80,34 @@ export class JobScheduler<D extends DataSource> implements Command {
      * @param dataSource Optional dataset identifier, forwarded to child.
      * @param callback Optional callback invoked for each processed record.
      * @param parser Optional parser to transform each emitted record.
+     * @param progressCallback
      */
-    async exec(chunk: string[] | JobMessage[], output: 'stdout' | 'file' = 'file', jobScript: string, dataSource?: D, callback?: Function, parser?: Parser<Records>): Promise<void> {
-        const criteriaObj = this.criteria ? Object.fromEntries(this.criteria) : undefined;
-
+    async exec(chunk: string[] | JobMessage[], output: 'stdout' | 'file' = 'file', jobScript: string, dataSource?: D, callback?: Function, parser?: Parser<Records>, progressCallback?: Function): Promise<void> {
         try {
-            await JobRunner
-                .init(jobScript)
-                .exec(
-                    {
-                        src: dataSource,
-                        file: chunk[this.filesProcessed] as string,
-                        output,
-                        criteria: criteriaObj,
-                        dataPath: this.DATA_PATH
-                    },
-                    callback,
-                    parser
-                );
-
+            const jobMessage = this.createJobMessage(chunk, dataSource, output);
+            await JobRunner.init(jobScript).exec(jobMessage, callback, parser, progressCallback);
             this.incrementFilesProcessed();
-
-            if(this.filesProcessed < chunk.length) {
-                return this.exec(chunk, output, jobScript, dataSource, callback);
-            }
-
+            if(this.filesProcessed < chunk.length) return this.exec(chunk, output, jobScript, dataSource, callback);
             return Promise.resolve();
         } catch (_) {
             FailToScheduleJob.exception()
+        }
+    }
+
+    /**
+     * Creates a JobMessage instance from the provided chunk and optional parameters.
+     * @param chunk - List of files to process.
+     * @param dataSource - Optional dataset identifier.
+     * @param output - Output destination ('stdout' | 'file').
+     * @private
+     */
+    private createJobMessage(chunk: string[] | JobMessage[], dataSource?: D, output: 'stdout' | 'file' = 'file') {
+        return {
+            src: dataSource,
+            file: chunk[this.filesProcessed] as string,
+            output,
+            criteria: this.criteria,
+            dataPath: this.DATA_PATH
         }
     }
 }

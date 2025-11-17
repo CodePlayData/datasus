@@ -24,6 +24,9 @@ import {Parser} from "./interface/utils/Parser.js";
 import {Records} from "./core/Records.js";
 import {DATASUSGenericFTPGateway} from "./interface/gateway/DATASUSGenericFTPGateway.js";
 import {FTPClient} from "./infra/ftp/FTPClient.js";
+import {Criteria} from "./interface/criteria/Criteria.js";
+import {StringCriteria} from "./interface/criteria/StringCriteria.js";
+import {ArrayCriteria} from "./interface/criteria/ArrayCriteria.js";
 
 type DataSource = {};
 type SIADatasource = DataSource & 'AB' | 'ABO' | 'ACF' | 'AD' | 'AM' | 'AN' | 'AQ' | 'AR' | 'ATD' | 'PA' | 'PS' | 'SAD' | 'BI'
@@ -120,13 +123,15 @@ const BIDictionary = new Map<string, (value: any) => any> ([
             .toUpperCase();
     }]
 ]);
-const filters = new Map<string, string | string[]>();
-filters.set('CBOPROF', "223293");
+
+const criteria = Criteria.set([
+    new ArrayCriteria(["223293", "223272"], 'CBOPROF')
+])
 
 const sia = SIASUSService.init(
     gateway,
-    filters,
-    (msg: any) => console.log(msg),
+    criteria.toObject(),
+    undefined,
     'file',
     MAX_CONCURRENT_PROCESSES
 );

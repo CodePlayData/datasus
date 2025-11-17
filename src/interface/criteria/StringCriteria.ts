@@ -22,13 +22,14 @@ import {Criteria} from "./Criteria.js";
 /**
  * Criteria that matches when a record's property equals an expected string.
  */
-export class StringCriteria<RecordType extends Records> implements Criteria<RecordType> {
+export class StringCriteria<RecordType extends Records> extends Criteria<RecordType> {
     readonly name: string;
     /**
      * @param str Expected value.
      * @param objProp Record property to compare.
      */
     constructor(readonly str: string, readonly objProp: string) {
+        super()
         this.name = objProp + '_FILTER';
     }
 

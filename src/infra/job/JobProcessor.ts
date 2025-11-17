@@ -20,9 +20,8 @@ import {Dbc} from "../Dbc.js";
 import {appendFile, appendFileSync} from "node:fs";
 import {JobMessage} from "./JobMessage.js";
 import {Criteria} from "../../interface/criteria/Criteria.js";
-import {ArrayCriteria} from "../../interface/criteria/ArrayCriteria.js";
-import {StringCriteria} from "../../interface/criteria/StringCriteria.js";
 import {Records} from "../../core/Records.js";
+import {JobSummary} from "./JobSummary.js";
 
 /** Error thrown when a single record cannot be processed. */
 class ProcessRecordFailed extends Error {
@@ -121,36 +120,12 @@ export class JobProcessor {
     }
 
     /**
-     * Builds Criteria objects from the message structure.
-     */
-    private loadCriteriaFromMsg() {
-        const criteria: Criteria<any>[] = [];
-
-        if (!this.msg.criteria) {
-            return criteria;
-        }
-
-        const entries = Array.isArray(this.msg.criteria) ?
-            this.msg.criteria :
-            Object.entries(this.msg.criteria);
-
-        for (const [key, value] of entries) {
-            criteria.push(
-                Array.isArray(value) ?
-                    new ArrayCriteria(value, key) :
-                    new StringCriteria(value, key)
-            );
-        }
-        return criteria;
-    }
-
-    /**
      * Main workflow: open file, iterate records, filter/emit, finalize and cleanup.
      */
     public async process(): Promise<void> {
         try {
             await this.initialize();
-            const criteria = this.loadCriteriaFromMsg();
+            const criteria = Criteria.load(this.msg.criteria);
             const total = this.summary.total || 0;
             let processed = 0;
             let lastPct = -1;
@@ -173,7 +148,7 @@ export class JobProcessor {
                     processed++;
                     emitProgress();
 
-                    if (!this.msg.criteria || criteria?.every(criteria => criteria?.match(record))) {
+                    if (!this.msg.criteria || criteria.check(record)) {
                         await this.handleRecord(record);
                     }
                 } catch (_) {
@@ -192,7 +167,8 @@ export class JobProcessor {
     }
 
     /**
-     * Opens the DBC (converting to DBF if needed) and logs initial info.
+     * Opens the DBC, converts to DBF, write in the temporary folder and read it.
+     * This consumes memory. It cannot be spawned. It's the same as malloc.
      */
     private async initialize(): Promise<void> {
         try {
@@ -227,7 +203,7 @@ export class JobProcessor {
     }
 
     /**
-     * Ensures temporary files are removed and the process exits with the right code.
+     * Ensures temporary files are removed from the temporary folder, freed memory and the process exits with the right code.
      */
     private async cleanup(exitCode: number): Promise<void> {
         try {

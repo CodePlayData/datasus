@@ -27,6 +27,7 @@ import {Records} from "../../core/Records.js";
 import {DataSource} from "../../core/Datasource.js";
 import {fileURLToPath} from "node:url";
 import { dirname, join } from "node:path";
+import {CriteriaObject} from "../../interface/criteria/CriteriaObject.js";
 
 /**
  * Job orchestrator for processing DATASUS files.
@@ -84,7 +85,7 @@ export class JobOrchestrator<
         readonly DATA_PATH: string = './',
         readonly MAX_CONCURRENT_PROCESSES: number,
         readonly output: 'stdout' | 'file' = 'stdout',
-        readonly filters?: Map<string, string | string[]>,
+        readonly filters?: CriteriaObject[],
         readonly callback?: Function,
     ) {
         this.resolvedDataPath = join(process.cwd(), DATA_PATH);
@@ -93,7 +94,7 @@ export class JobOrchestrator<
     /**
      * Factory method for creating an orchestrator with basic configuration.
      */
-    static init(gateway: DATASUSGateway<Subset>, filters?: Map<string, string | string[]>, callback?: Function, logOutput: 'stdout' | 'file' = 'stdout', MAX_CONCURRENT_PROCESSES: number = 5, DATA_PATH: string = './') {
+    static init(gateway: DATASUSGateway<Subset>, filters?: CriteriaObject[], callback?: Function, logOutput: 'stdout' | 'file' = 'stdout', MAX_CONCURRENT_PROCESSES: number = 5, DATA_PATH: string = './') {
         return new JobOrchestrator(gateway, DATA_PATH, MAX_CONCURRENT_PROCESSES, logOutput, filters, callback)
     }
 
@@ -138,7 +139,7 @@ export class JobOrchestrator<
         let chunksProceeded = 0;
         if(this.output === 'file') console.log(`\nSending Jobs.\n`);
         while (chunksProceeded < this._chunks.length) {
-            await JobScheduler.init(this.MAX_CONCURRENT_PROCESSES, this.filters, this.resolvedDataPath).exec(this._chunks[chunksProceeded], this.output, scriptToUse, this.dataSource,  this.callback, this.parser).finally(() => {
+            await JobScheduler.init(this.MAX_CONCURRENT_PROCESSES, this.filters /* criteria, supposed to be query */, this.resolvedDataPath).exec(this._chunks[chunksProceeded], this.output, scriptToUse, this.dataSource,  this.callback, this.parser).finally(() => {
                 chunksProceeded = chunksProceeded + 1
             })
         }

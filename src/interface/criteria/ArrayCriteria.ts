@@ -22,13 +22,14 @@ import {Criteria} from "./Criteria.js";
 /**
  * Criteria that matches when a record's property value is contained in a list.
  */
-export class ArrayCriteria<RecordType extends Records> implements Criteria<RecordType> {
+export class ArrayCriteria<RecordType extends Records> extends Criteria<RecordType> {
     readonly name: string;
     /**
      * @param array Allowed values.
      * @param objProp Record property to compare.
      */
     constructor(readonly array: string[], readonly objProp: string) {
+        super()
         this.name = objProp + '_FILTER';
     }
 

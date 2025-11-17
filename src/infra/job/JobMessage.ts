@@ -19,6 +19,7 @@
 
 
 import {DataSource} from "../../core/Datasource.js";
+import {CriteriaObject} from "../../interface/criteria/CriteriaObject.js";
 
 /**
  * Message sent from the scheduler to the worker process to start a job.
@@ -32,7 +33,7 @@ import {DataSource} from "../../core/Datasource.js";
 export type JobMessage = {
     src: DataSource | undefined,
     file: string,
-    criteria?: Record<string, string | string[]> | [string, string | string[]][],
+    criteria?: CriteriaObject[],
     output: 'stdout' | 'file',
     dataPath: string | undefined
 }

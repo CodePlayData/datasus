@@ -16,15 +16,21 @@
     limitations under the License.
 */
 
+import {CriteriaObject} from "./CriteriaObject.js";
+import { createRequire } from 'node:module';
+import {CriteriaSet} from "./CriteriaSet.js";
+
+const require = createRequire(import.meta.url);
+
 /**
  * Generic contract for record filtering criteria.
  *
  * Implementations decide whether a given record matches a condition and may
  * expose a human-readable name and optional backing values (str/array).
  */
-export interface Criteria<T> {
+export abstract class Criteria<T> {
     /** Identifier used for logging/summary, usually "<field>_FILTER". */
-    name: string;
+    name!: string;
     /** Optional string value used by simple criteria implementations. */
     str?: string;
     /** Optional array of values used by multi-value criteria implementations. */
@@ -32,8 +38,23 @@ export interface Criteria<T> {
     /**
      * Returns true if the provided record satisfies the criterion.
      */
-    match(record: T): boolean;
+    abstract match(record: T): boolean;
+
+
+    static fromObject<T>(dto?: CriteriaObject[] | null): Criteria<T>[] {
+        if (!dto || dto.length === 0) return [];
+        const { StringCriteria } = require('./StringCriteria.js');
+        const { ArrayCriteria } = require('./ArrayCriteria.js');
+        return dto.map((criteriaObject) =>
+            // @ts-ignore
+            criteriaObject.type === 'string' ? new StringCriteria<T>(criteriaObject.value, criteriaObject.prop) : new ArrayCriteria<T>(criteriaObject.value, criteriaObject.prop)
+        );
+    }
+
+    static load<T>(criteriaObject?: CriteriaObject[] | null) {
+        return new CriteriaSet<T>(Criteria.fromObject<T>(criteriaObject));
+    }
+
+    static set<T>(list: Criteria<T>[]) { return new CriteriaSet(list); }
 }
-
-
 
