@@ -10,5 +10,7 @@
       "declaration": true,                                  
       "skipLibCheck": true,
       "moduleResolution": "node"
-    }
+    },
+    "include": ["src"],
+    "exclude": ["test.ts", "tests", "**/*.test.ts", "dist"]
 }

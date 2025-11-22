@@ -19,7 +19,7 @@
 
 
 import {DataSource} from "../../core/Datasource.js";
-import {CriteriaObject} from "../../interface/criteria/CriteriaObject.js";
+import {CriteriaObject} from "../../interface/criteria/CriteriaObject";
 
 /**
  * Message sent from the scheduler to the worker process to start a job.

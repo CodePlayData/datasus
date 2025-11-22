@@ -1,12 +1,13 @@
 {
   "name": "@codeplaydata/datasus",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "build": "tsc && cp LICENSE ./dist/LICENSE && cp README.md ./dist/README.md && cp package.json ./dist/package.json",
     "publish": "npm publish ./dist --access=public",
-    "test": "npm run build && node --max-old-space-size=4096 ./dist/main.js"
+    "main": "npm run build && node --max-old-space-size=4096 ./dist/main.js",
+    "test": "npx tsx test.ts"
   },
   "keywords": [
     "DATASUS",

@@ -10,24 +10,10 @@
         http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-*/
-
-import {CriteriaObject} from "./CriteriaObject.js";
-import { createRequire } from 'node:module';
-import {CriteriaSet} from "./CriteriaSet.js";
-
-const require = createRequire(import.meta.url);
-
-/**
- * Generic contract for record filtering criteria.
- *
- * Implementations decide whether a given record matches a condition and may
- * expose a human-readable name and optional backing values (str/array).
  */
+import { CriteriaObject } from "./CriteriaObject.js";
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 export abstract class Criteria<T> {
     /** Identifier used for logging/summary, usually "<field>_FILTER". */
     name!: string;
@@ -55,6 +41,57 @@ export abstract class Criteria<T> {
         return new CriteriaSet<T>(Criteria.fromObject<T>(criteriaObject));
     }
 
-    static set<T>(list: Criteria<T>[]) { return new CriteriaSet(list); }
+    static set<T>(list: Criteria<T>[]) {
+        const { ArrayCriteria } = require('./ArrayCriteria.js');
+        const { StringCriteria } = require('./StringCriteria.js');
+
+        const groups = new Map<string, Set<string>>();
+        const others: Criteria<T>[] = [];
+
+        for (const item of list) {
+            const anyItem = item as any;
+            if (anyItem.str !== undefined && anyItem.objProp) {
+                if (!groups.has(anyItem.objProp)) {
+                    groups.set(anyItem.objProp, new Set());
+                }
+                groups.get(anyItem.objProp)!.add(anyItem.str);
+            } else if (anyItem.array !== undefined && anyItem.objProp) {
+                if (!groups.has(anyItem.objProp)) {
+                    groups.set(anyItem.objProp, new Set());
+                }
+                anyItem.array.forEach((val: string) => groups.get(anyItem.objProp)!.add(val));
+            } else {
+                others.push(item);
+            }
+        }
+
+        const merged: Criteria<T>[] = [];
+        for (const [prop, values] of groups) {
+            if (values.size === 1) {
+                merged.push(new StringCriteria([...values][0], prop));
+            } else {
+                merged.push(new ArrayCriteria([...values], prop));
+            }
+        }
+
+        return new CriteriaSet([...merged, ...others]);
+    }
 }
+
+class CriteriaSet<T> {
+    constructor(private readonly list: Criteria<T>[]) { }
+    isEmpty(): boolean { return this.list.length === 0; }
+    check(record: T): boolean { return this.list.every(c => c.match(record)); }
+    values(): Criteria<T>[] { return [...this.list]; }
+
+    toDTO(): CriteriaObject[] {
+        return this.list.map((criteria) => {
+            const anyC = criteria as any;
+            const prop = anyC.objProp ?? (criteria.name.replace(/_FILTER$/, ''));
+            if (Array.isArray(anyC.array)) return { type: 'array', prop, value: anyC.array } as const;
+            return { type: 'string', prop, value: anyC.str } as const;
+        });
+    }
+}
+
 

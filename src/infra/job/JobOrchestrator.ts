@@ -27,7 +27,7 @@ import {Records} from "../../core/Records.js";
 import {DataSource} from "../../core/Datasource.js";
 import {fileURLToPath} from "node:url";
 import { dirname, join } from "node:path";
-import {CriteriaObject} from "../../interface/criteria/CriteriaObject.js";
+import {CriteriaObject} from "../../interface/criteria/CriteriaObject";
 
 /**
  * Job orchestrator for processing DATASUS files.

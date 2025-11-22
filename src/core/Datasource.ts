@@ -16,4 +16,4 @@
     limitations under the License.
 */
 
-export type DataSource = {};
+export type Datasource = {};

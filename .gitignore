@@ -1,3 +1,6 @@
+.idea
+
+*.dbc
 # Logs
 logs
 *.log

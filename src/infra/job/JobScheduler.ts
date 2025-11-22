@@ -22,7 +22,7 @@ import {JobMessage} from "./JobMessage.js";
 import {Parser} from "../../interface/utils/Parser.js";
 import {Records} from "../../core/Records.js";
 import {DataSource} from "../../core/Datasource.js";
-import {CriteriaObject} from "../../interface/criteria/CriteriaObject.js";
+import {CriteriaObject} from "../../interface/criteria/CriteriaObject";
 
 /**
  * Error thrown when a job could not be scheduled for execution.
