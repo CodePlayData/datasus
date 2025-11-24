@@ -1,7 +1,7 @@
 
-import { LinkageStrategy } from './src/interface/linkage/LinkageStrategy.js';
-import { InMemoryIndex } from './src/infra/storage/InMemoryIndex.js';
-import { Records } from './src/core/Records.js';
+import { LinkageStrategy } from './lib/interface/linkage/LinkageStrategy.js';
+import { InMemoryIndex } from './lib/infra/storage/InMemoryIndex.js';
+import { Records } from './lib/core/Records.js';
 
 // Mock Service
 class MockService {
@@ -49,7 +49,8 @@ async function runTest() {
     strategy.link(targetService as any, {
         name: 'Target B (Deterministic)',
         type: 'deterministic',
-        on: { 'NAME': 'NAME', 'DOB': 'DOB' }
+        on: { 'NAME': 'NAME', 'DOB': 'DOB' },
+        blocking: { 'NAME': 'NAME' } // Block on NAME to match other strategies
     });
 
     // Probabilistic Test Case
