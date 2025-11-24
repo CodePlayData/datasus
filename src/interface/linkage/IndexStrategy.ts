@@ -1,4 +1,4 @@
-// @filename: SIAGateway.ts
+// @filename: IndexStrategy.ts
 
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
@@ -16,12 +16,23 @@
  *     limitations under the License.
  */
 
-import {DATASUSGateway} from "../../interface/gateway/DATASUSGateway.js";
-import {SIASubset} from "./SIASubset.js";
-
 /**
- * Interface representing a gateway for the SIA (Sistema de Informações de Ambulatoriais).
- * @interface SIAGateway
- * @extends DATASUSGateway<SIASubset>
+ * Strategy for storing and retrieving records for linkage.
  */
-export interface SIAGateway extends DATASUSGateway<SIASubset>{}
+export interface IndexStrategy {
+    /**
+     * Stores a value (record or ID) associated with a key.
+     * If the key already exists, the value should be appended to the list of values for that key.
+     */
+    set(key: string, value: any): Promise<void>;
+
+    /**
+     * Retrieves the list of values associated with a key.
+     */
+    get(key: string): Promise<any[]>;
+
+    /**
+     * Checks if a key exists in the index.
+     */
+    has(key: string): Promise<boolean>;
+}

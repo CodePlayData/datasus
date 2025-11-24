@@ -1,4 +1,4 @@
-// @filename: SIAGateway.ts
+// @filename: CohortConfig.ts
 
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
@@ -16,12 +16,10 @@
  *     limitations under the License.
  */
 
-import {DATASUSGateway} from "../../interface/gateway/DATASUSGateway.js";
-import {SIASubset} from "./SIASubset.js";
+import { CriteriaObject } from "../criteria/CriteriaObject.js";
 
-/**
- * Interface representing a gateway for the SIA (Sistema de Informações de Ambulatoriais).
- * @interface SIAGateway
- * @extends DATASUSGateway<SIASubset>
- */
-export interface SIAGateway extends DATASUSGateway<SIASubset>{}
+export type CohortConfig = {
+    name: string;
+    subset?: any;
+    criteria?: CriteriaObject[];
+};

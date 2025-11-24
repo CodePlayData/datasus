@@ -18,13 +18,13 @@
 
 import { Records } from "./core/Records.js";
 import { Subset } from "./core/Subset.js";
-import { DataSource} from "./core/Datasource.js";
 import { BasicFTPClient } from "./infra/ftp/BasicFTPClient.js";
 import { FTPClient } from "./infra/ftp/FTPClient.js";
 import { DATASUSGateway } from "./interface/gateway/DATASUSGateway.js";
 import { Parser } from "./interface/utils/Parser.js";
 import { JobOrchestrator } from "./infra/job/JobOrchestrator.js";
 import { DATASUSGenericFTPGateway } from "./interface/gateway/DATASUSGenericFTPGateway.js";
+import { Datasource } from "./core/Datasource.js";
 
 export {
     DATASUSGenericFTPGateway,
@@ -33,7 +33,7 @@ export {
     DATASUSGateway,
     Records,
     Subset,
-    DataSource,
+    Datasource,
     BasicFTPClient,
     FTPClient
 }

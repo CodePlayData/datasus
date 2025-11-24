@@ -16,24 +16,12 @@
     limitations under the License.
 */
 
+import { Datasource } from "../../core/Datasource.js";
+import {CriteriaObject} from "../../interface/criteria/CriteriaObject.js";
 
-
-import {DataSource} from "../../core/Datasource.js";
-import {CriteriaObject} from "../../interface/criteria/CriteriaObject";
-
-/**
- * Message sent from the scheduler to the worker process to start a job.
- *
- * - src: dataset identifier (optional) to inform the worker which domain it belongs to;
- * - file: target filename to be processed (relative to dataPath);
- * - criteria: filters applied when reading records;
- * - output: where to emit records ('stdout' | 'file');
- * - dataPath: base path where the file resides and where outputs are written.
- */
 export type JobMessage = {
-    src: DataSource | undefined,
+    src: Datasource | undefined,
     file: string,
     criteria?: CriteriaObject[],
-    output: 'stdout' | 'file',
     dataPath: string | undefined
 }

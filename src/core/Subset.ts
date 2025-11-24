@@ -16,6 +16,10 @@
     limitations under the License.
 */
 
+/**
+ * Interface representing a subset of data.
+ * @interface Subset
+ */
 export interface Subset {
     src: any
     [key: string]: any

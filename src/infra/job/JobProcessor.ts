@@ -23,7 +23,6 @@ import {Criteria} from "../../interface/criteria/Criteria.js";
 import {Records} from "../../core/Records.js";
 import {JobSummary} from "./JobSummary.js";
 
-/** Error thrown when a single record cannot be processed. */
 class ProcessRecordFailed extends Error {
     constructor() {
         super(`[ERROR]: Could not process record.`)
@@ -36,7 +35,6 @@ class ProcessRecordFailed extends Error {
     }
 }
 
-/** Error thrown when the cleanup step cannot be completed. */
 class CouldNotCleanUp extends Error {
     constructor() {
         super(`[ERROR]: The cleanup process could not be completed.`)
@@ -49,21 +47,11 @@ class CouldNotCleanUp extends Error {
     }
 }
 
-
-/**
- * Worker-side processor that reads a DBC/DBF file and emits records.
- *
- * It loads criteria from the message, optionally filters records, and for each
- * record it either prints to stdout or appends to a file, updating a summary.
- */
 export class JobProcessor {
     private summary: JobSummary;
     private dbc: Dbc | null;
     private msg: JobMessage;
 
-    /**
-     * @param msg Job message containing file, output, criteria and data path.
-     */
     constructor(msg: JobMessage) {
         this.msg = msg;
         this.dbc = null;
@@ -78,50 +66,17 @@ export class JobProcessor {
         };
     }
 
-    /**
-     * Processes one record according to the configured output mode.
-     */
     private async handleRecord(record: Records): Promise<void> {
         try {
-            switch (this.msg.output) {
-                case 'stdout':
-                    console.log(JSON.stringify(record));
-                    this.summary.founds++;
-                    // @ts-ignore
-                    process.send(record);
-                    break;
-                case 'file':
-                    await this.writeToFile(record);
-                    break;
-            }
+            this.summary.founds++;
+            // @ts-ignore
+            process.send(record);
         } catch (_) {
             this.summary.errors++;
             ProcessRecordFailed.exception()
         }
     }
 
-    /**
-     * Appends the record as JSON to the data.json file in the given data path.
-     */
-    private async writeToFile(record: Records): Promise<void> {
-        return new Promise((resolve, reject) => {
-            appendFile(this.msg.dataPath + 'data.json', JSON.stringify(record), (error) => {
-                if (error) {
-                    this.summary.errors++;
-                    reject(error);
-                    return;
-                }
-                this.summary.founds++;
-                // @ts-ignore
-                process.send(record);
-                resolve();
-            });
-        });
-    }
-
-    /**
-     * Main workflow: open file, iterate records, filter/emit, finalize and cleanup.
-     */
     public async process(): Promise<void> {
         try {
             await this.initialize();
@@ -129,7 +84,7 @@ export class JobProcessor {
             const total = this.summary.total || 0;
             let processed = 0;
             let lastPct = -1;
-            const step = 1; // percent granularity
+            const step = 1;
             const emitProgress = () => {
                 if (total <= 0) return;
                 const pct = Math.floor((processed / total) * 100);
@@ -166,26 +121,16 @@ export class JobProcessor {
         }
     }
 
-    /**
-     * Opens the DBC, converts to DBF, write in the temporary folder and read it.
-     * This consumes memory. It cannot be spawned. It's the same as malloc.
-     */
     private async initialize(): Promise<void> {
         try {
             this.dbc = await Dbc.load(this.msg.dataPath + this.msg.file);
             this.summary.total = this.dbc.size;
-
-            if (this.msg.output === 'file') {
-                console.log(`O processo ${process.pid} iniciou o processamento do arquivo ${this.msg.file}.`);
-            }
+            console.log(`O processo ${process.pid} iniciou o processamento do arquivo ${this.msg.file}.`);
         } catch (_) {
             ProcessFatal.exception(process.pid.toString());
         }
     }
 
-    /**
-     * Writes a summary and performs final cleanup.
-     */
     private async finalize(): Promise<void> {
         try {
             appendFileSync(`${this.msg.dataPath}summary.json`, JSON.stringify(this.summary));
@@ -202,9 +147,6 @@ export class JobProcessor {
         }
     }
 
-    /**
-     * Ensures temporary files are removed from the temporary folder, freed memory and the process exits with the right code.
-     */
     private async cleanup(exitCode: number): Promise<void> {
         try {
             if (this.dbc) {

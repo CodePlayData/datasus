@@ -18,6 +18,9 @@
 
 import {CriteriaObject} from "../../interface/criteria/CriteriaObject.js";
 
+/**
+ * Job summary interface.
+ */
 export interface JobSummary {
     pid: number;
     file: string;

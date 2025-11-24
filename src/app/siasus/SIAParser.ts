@@ -19,4 +19,9 @@
 import {Parser} from "../../interface/utils/Parser.js";
 import {Records} from "../../core/Records.js";
 
+/**
+ * Interface representing a parser for the SIA (Sistema de Informações de Ambulatoriais).
+ * @interface SIAParser
+ * @extends Parser<Records>
+ */
 export interface SIAParser extends Parser<Records>{}

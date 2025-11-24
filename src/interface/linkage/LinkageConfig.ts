@@ -1,4 +1,4 @@
-// @filename: SIAGateway.ts
+// @filename: LinkageConfig.ts
 
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
@@ -16,12 +16,17 @@
  *     limitations under the License.
  */
 
-import {DATASUSGateway} from "../../interface/gateway/DATASUSGateway.js";
-import {SIASubset} from "./SIASubset.js";
+import { CriteriaObject } from "../criteria/CriteriaObject.js";
+import { WeightConfig } from "./WeightConfig.js";
 
-/**
- * Interface representing a gateway for the SIA (Sistema de Informações de Ambulatoriais).
- * @interface SIAGateway
- * @extends DATASUSGateway<SIASubset>
- */
-export interface SIAGateway extends DATASUSGateway<SIASubset>{}
+export type LinkageConfig = {
+    name: string;
+    type: 'deterministic' | 'probabilistic';
+    scoreStrategy?: 'simple' | 'fellegi-sunter';
+    on: Record<string, string>;
+    blocking?: Record<string, string>;
+    weights?: Record<string, WeightConfig>;
+    threshold?: number;
+    criteria?: CriteriaObject[];
+    subset?: any;
+};

@@ -16,4 +16,6 @@
     limitations under the License.
 */
 
+import { StateCode } from "./StateCode.js";
+
 export type State = keyof typeof StateCode;

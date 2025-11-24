@@ -19,32 +19,14 @@
 
 import {Command} from "./Command.js";
 
-/**
- * Utility to split a list of items into fixed-size chunks.
- *
- * This is used by the JobOrchestrator to partition file lists and control
- * the max number of concurrent jobs handled by the JobScheduler.
- */
 export class SplitIntoChunks implements Command {
-    /**
-     * @param chunkSize Desired size of each chunk (number of items per chunk).
-     */
     private constructor(protected chunkSize: number) {
     }
 
-    /**
-     * Factory method to create a splitter with a defined chunk size.
-     * @param chunkSize Number of items per chunk.
-     */
     static define(chunkSize: number) {
         return new SplitIntoChunks(chunkSize)
     }
 
-    /**
-     * Splits the given array into chunks of the configured size.
-     * @param arr List of items to be partitioned.
-     * @returns An array of arrays (chunks) keeping original order.
-     */
     exec(arr: string[]) {
         const chunks = [];
         for (let i = 0; i < arr.length; i += this.chunkSize) {

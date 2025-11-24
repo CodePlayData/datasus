@@ -1,4 +1,4 @@
-// @filename: SIAGateway.ts
+// @filename: InMemoryIndex.ts
 
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
@@ -16,12 +16,23 @@
  *     limitations under the License.
  */
 
-import {DATASUSGateway} from "../../interface/gateway/DATASUSGateway.js";
-import {SIASubset} from "./SIASubset.js";
+import { IndexStrategy } from "../../interface/linkage/IndexStrategy.js";
 
-/**
- * Interface representing a gateway for the SIA (Sistema de Informações de Ambulatoriais).
- * @interface SIAGateway
- * @extends DATASUSGateway<SIASubset>
- */
-export interface SIAGateway extends DATASUSGateway<SIASubset>{}
+export class InMemoryIndex implements IndexStrategy {
+    private store = new Map<string, any[]>();
+
+    async set(key: string, value: any): Promise<void> {
+        if (!this.store.has(key)) {
+            this.store.set(key, []);
+        }
+        this.store.get(key)!.push(value);
+    }
+
+    async get(key: string): Promise<any[]> {
+        return this.store.get(key) || [];
+    }
+
+    async has(key: string): Promise<boolean> {
+        return this.store.has(key);
+    }
+}

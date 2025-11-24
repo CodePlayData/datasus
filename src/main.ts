@@ -19,6 +19,7 @@
 import { SIABasicParser } from "./app/siasus/SIABasicParser.js";
 import { SIAFTPGateway } from "./app/siasus/SIAFTPGateway.js";
 import { SIASUSService } from "./app/siasus/SIASUSService.js";
+import { Records } from "./core/Records.js";
 import {BasicFTPClient} from "./infra/ftp/BasicFTPClient.js";
 import {Criteria} from "./interface/criteria/Criteria.js";
 import {StringCriteria} from "./interface/criteria/StringCriteria.js";
@@ -27,19 +28,13 @@ const MAX_CONCURRENT_PROCESSES = 5;
 const FTP_HOST = 'ftp.datasus.gov.br';
 const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 const gateway = await SIAFTPGateway.getInstanceOf(ftpClient!);
-const BIDictionary = new Map<string, (value: any) => any> ([
-    ['CNS_PAC', (value: string) => {
-        const cleanStr = value.trim();
-        if (!cleanStr) return '';
-        return Array.from(cleanStr)
-            .map(char => char.charCodeAt(0).toString(16).padStart(2, '0'))
-            .join('')
-            .toUpperCase();
-    }]
+const BIDictionary = new Map<string, (value: any) => any>([
+    ['CNS_PAC', (value: string) => Buffer.from((value as String)).toString("hex")]
 ]);
 
 type BPAIRecord = {
     CBOPROF: string;
+    CNS_PAC: string;
     [key: string]: any;
 };
 
@@ -48,14 +43,7 @@ const criteria = Criteria.set([
     new StringCriteria<BPAIRecord>('223208', 'CBOPROF')
 ])
 
-const sia = SIASUSService.init(
-    gateway,
-    criteria.toDTO(),
-    undefined,
-    'file',
-    MAX_CONCURRENT_PROCESSES
-);
-
+const sia = SIASUSService.init(gateway, criteria.toDTO(), MAX_CONCURRENT_PROCESSES);
 const parser = SIABasicParser.instanceOf(BIDictionary);
 
 await sia.subset({
@@ -73,7 +61,11 @@ await sia.subset({
     }
 }, parser)
 
-await sia.exec('./dist/infra/job/job.js').finally(
+await sia.exec(
+    (record: Records) => {
+        console.log(record)
+    }
+).finally(
     () => {
         console.log('Done!')
         process.exit(0)

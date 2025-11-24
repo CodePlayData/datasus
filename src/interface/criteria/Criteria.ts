@@ -10,22 +10,23 @@
         http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
- */
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 import { CriteriaObject } from "./CriteriaObject.js";
 import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-export abstract class Criteria<T> {
-    /** Identifier used for logging/summary, usually "<field>_FILTER". */
-    name!: string;
-    /** Optional string value used by simple criteria implementations. */
-    str?: string;
-    /** Optional array of values used by multi-value criteria implementations. */
-    array?: string[];
-    /**
-     * Returns true if the provided record satisfies the criterion.
-     */
-    abstract match(record: T): boolean;
 
+const require = createRequire(import.meta.url);
+
+export abstract class Criteria<T> {
+    name!: string;
+    str?: string;
+    array?: string[];
+
+    abstract match(record: T): boolean;
 
     static fromObject<T>(dto?: CriteriaObject[] | null): Criteria<T>[] {
         if (!dto || dto.length === 0) return [];
@@ -93,5 +94,3 @@ class CriteriaSet<T> {
         });
     }
 }
-
-
