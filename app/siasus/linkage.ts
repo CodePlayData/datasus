@@ -17,9 +17,7 @@
 */
 
 import { MongoClient } from "mongodb";
-import { MongoIndex } from "../../lib/infra/storage/MongoIndex.js";
-import { LinkageStrategy } from "../../lib/interface/linkage/LinkageStrategy.js";
-import { MongoMatchRepository } from "../../lib/infra/storage/MongoMatchRepository.js";
+import { MongoIndex, LinkageStrategy, MongoMatchRepository } from "@codeplaydata/datasus-linkage";
 import { parser, sia, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
@@ -41,9 +39,6 @@ const strategy = new LinkageStrategy("Test study", indexStrategy, matchRepositor
 
 await strategy
     .cohort(sia, { name: "SIASUS", subset, parser })
-
-
-
 
 // Example usage (commented out as it requires actual services)
 /*

@@ -16,6 +16,6 @@
     limitations under the License.
 */
 
-import { Datasource } from "../../../lib/index.js";
+import { Datasource } from "@codeplaydata/datasus-core";
 
 export type SIADatasource = Datasource & 'AB' | 'ABO' | 'ACF' | 'AD' | 'AM' | 'AN' | 'AQ' | 'AR' | 'ATD' | 'PA' | 'PS' | 'SAD' | 'BI'

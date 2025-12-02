@@ -17,7 +17,7 @@
 */
 
 import { MongoClient } from "mongodb";
-import { Records } from "../../lib/index.js";
+import { Records } from "@codeplaydata/datasus-core";
 import { sia, parser, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
@@ -32,13 +32,18 @@ const collection = db.collection(COLLECTION_NAME);
 await sia.subset(subset, parser)
 
 await sia.exec(
+    /*
     async (record: Records) => {
         await collection.insertOne(record);
+    }
+    */
+    (record: Records) => {
+        console.log(record);
     }
 ).finally(
     async () => {
         console.log('Done!');
-        await mongoClient.close();
+        // await mongoClient.close();
         process.exit(0);
     }
 );

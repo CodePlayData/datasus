@@ -18,7 +18,7 @@
 
 
 import { SIAParser } from "./SIAParser.js";
-import { Records } from "../../../lib/index.js";
+import { Records } from "@codeplaydata/datasus-core";
 
 export class SIABasicParser implements SIAParser {
     record: Records | undefined

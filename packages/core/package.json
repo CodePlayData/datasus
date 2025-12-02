@@ -1,0 +1,17 @@
+{
+    "name": "@codeplaydata/datasus-core",
+    "version": "0.1.0",
+    "main": "dist/index.js",
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc -b"
+    },
+    "dependencies": {
+        "@codeplaydata/dbc2dbf": "^1.0.2",
+        "basic-ftp": "^5.0.5",
+        "dbffile": "^1.12.0"
+    }
+}

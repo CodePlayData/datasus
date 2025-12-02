@@ -17,7 +17,7 @@
  */
 
 
-import { DATASUSGateway } from "../../../lib/index.js";
+import { DATASUSGateway } from "@codeplaydata/datasus-core";
 import { SIASubset } from "./SIASubset.js";
 
 /**

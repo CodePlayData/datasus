@@ -16,7 +16,7 @@
  *     limitations under the License.
  */
 
-import { Parser, Records } from "../../../lib/index.js";
+import { Parser, Records } from "@codeplaydata/datasus-core";
 
 /**
  * Interface representing a parser for the SIA (Sistema de Informações de Ambulatoriais).

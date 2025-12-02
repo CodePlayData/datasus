@@ -17,7 +17,7 @@
  */
 
 
-import { DATASUSGenericFTPGateway, FTPClient } from "../../../lib/index.js";
+import { DATASUSGenericFTPGateway, FTPClient } from "@codeplaydata/datasus-core";
 import { SIASubset } from "./SIASubset.js";
 
 export class SIAFTPGateway extends DATASUSGenericFTPGateway<SIASubset> {

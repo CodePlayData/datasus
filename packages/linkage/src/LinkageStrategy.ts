@@ -15,13 +15,11 @@
  */
 
 
-import { Pipeline } from "../pipeline/Pipeline.js";
+import { Pipeline, Records, JobOrchestrator } from "@codeplaydata/datasus-core";
 import { IndexStrategy } from "./IndexStrategy.js";
-import { Records } from "../../core/Records.js";
 import { CohortConfig } from "./CohortConfig.js";
 import { LinkageConfig } from "./LinkageConfig.js";
-import { InMemoryIndex } from "../../infra/storage/InMemoryIndex.js";
-import { JobOrchestrator } from "../../infra/job/JobOrchestrator.js";
+import { InMemoryIndex } from "./infra/storage/InMemoryIndex.js";
 import { MatchRepository } from "./MatchRepository.js";
 
 export class LinkageStrategy implements Pipeline {

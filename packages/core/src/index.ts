@@ -25,6 +25,10 @@ import { Parser } from "./interface/utils/Parser.js";
 import { JobOrchestrator } from "./infra/job/JobOrchestrator.js";
 import { DATASUSGenericFTPGateway } from "./interface/gateway/DATASUSGenericFTPGateway.js";
 import { Datasource } from "./core/Datasource.js";
+import { Pipeline } from "./interface/pipeline/Pipeline.js";
+import { Criteria } from "./interface/criteria/Criteria.js";
+import { StringCriteria } from "./interface/criteria/StringCriteria.js";
+import { ArrayCriteria } from "./interface/criteria/ArrayCriteria.js";
 
 export {
     DATASUSGenericFTPGateway,
@@ -35,5 +39,9 @@ export {
     Subset,
     Datasource,
     BasicFTPClient,
-    FTPClient
+    FTPClient,
+    Criteria,
+    StringCriteria,
+    ArrayCriteria,
+    Pipeline
 }
