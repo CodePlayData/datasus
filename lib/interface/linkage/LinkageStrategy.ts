@@ -60,7 +60,7 @@ export class LinkageStrategy implements Pipeline {
         console.log(`[LinkageStrategy] Starting Cohort: ${this.cohortStep.config.name}`);
 
         if (this.cohortStep.config.subset) {
-            await this.cohortStep.service.subset(this.cohortStep.config.subset);
+            await this.cohortStep.service.subset(this.cohortStep.config.subset, this.cohortStep.config.parser);
         }
 
         await this.cohortStep.service.exec(async (record: Records) => {

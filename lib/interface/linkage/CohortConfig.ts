@@ -16,10 +16,12 @@
  *     limitations under the License.
  */
 
-import { CriteriaObject } from "../criteria/CriteriaObject.js";
+import { Records } from "../../core/Records.js";
+import { Subset } from "../../core/Subset.js";
+import { Parser } from "../utils/Parser.js";
 
 export type CohortConfig = {
     name: string;
-    subset?: any;
-    criteria?: CriteriaObject[];
+    subset?: Subset;
+    parser?: Parser<Records>;
 };

@@ -17,8 +17,8 @@
  */
 
 
-import { Records } from "../../../lib/src/core/Records.js";
 import { SIAParser } from "./SIAParser.js";
+import { Records } from "../../../lib/index.js";
 
 export class SIABasicParser implements SIAParser {
     record: Records | undefined

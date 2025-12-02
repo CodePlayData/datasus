@@ -48,7 +48,6 @@ export class Dbc {
             dbc2dbf(io);
         }
         let dbf = await DBFFile.open(io.output);
-        console.log(dbf._encoding)
         return new Dbc(dbf, io)
     }
 

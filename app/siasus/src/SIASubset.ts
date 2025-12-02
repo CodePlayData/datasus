@@ -16,9 +16,9 @@
  *     limitations under the License.
  */
 
-import { Subset } from "../../../lib/src/core/Subset.js";
 import { SIADatasource } from "./SIADatasource.js";
 import { State } from "./State.js";
 import { Period } from "./Period.js";
+import { Subset } from "../../../lib/index.js";
 
 export type SIASubset = Subset & { src: SIADatasource } | { src: SIADatasource, states: State[] } | { src: SIADatasource, states: State[], period: Period };

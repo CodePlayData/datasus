@@ -17,16 +17,16 @@
 */
 
 
-import {SplitIntoChunks} from "../SplitIntoChunks.js";
-import {JobScheduler} from "./JobScheduler.js";
-import {Command} from "../Command.js";
-import {Subset} from "../../core/Subset.js";
-import {DATASUSGateway} from "../../interface/gateway/DATASUSGateway.js";
-import {Parser} from "../../interface/utils/Parser.js";
-import {Records} from "../../core/Records.js";
-import {fileURLToPath} from "node:url";
-import { dirname, join } from "node:path";
-import {CriteriaObject} from "../../interface/criteria/CriteriaObject";
+import { SplitIntoChunks } from "../SplitIntoChunks.js";
+import { JobScheduler } from "./JobScheduler.js";
+import { Command } from "../Command.js";
+import { Subset } from "../../core/Subset.js";
+import { DATASUSGateway } from "../../interface/gateway/DATASUSGateway.js";
+import { Parser } from "../../interface/utils/Parser.js";
+import { Records } from "../../core/Records.js";
+import { fileURLToPath } from "node:url";
+import { dirname, join, resolve } from "node:path";
+import { CriteriaObject } from "../../interface/criteria/CriteriaObject";
 import { Datasource } from "../../core/Datasource.js";
 
 export class JobOrchestrator<
@@ -55,7 +55,7 @@ export class JobOrchestrator<
         readonly MAX_CONCURRENT_PROCESSES: number,
         readonly filters?: CriteriaObject[]
     ) {
-        this.resolvedDataPath = join(process.cwd(), DATA_PATH);
+        this.resolvedDataPath = resolve(DATA_PATH);
     }
 
     static init(gateway: DATASUSGateway<Subset>, filters?: CriteriaObject[], MAX_CONCURRENT_PROCESSES: number = 5, DATA_PATH: string = './') {
@@ -85,17 +85,17 @@ export class JobOrchestrator<
 
         for await (let file of this._files) {
             console.log(`Downloading ${file}...`)
-            await this.gateway.get(file, this.resolvedDataPath + file)
+            await this.gateway.get(file, join(this.resolvedDataPath, file))
             console.log(`Download of ${file} completed.`)
         }
         let chunksProceeded = 0;
         console.log(`\nSending Jobs.\n`);
         while (chunksProceeded < this._chunks.length) {
-            await JobScheduler.init(this.MAX_CONCURRENT_PROCESSES, this.filters /* criteria, supposed to be query */, this.resolvedDataPath).exec(this._chunks[chunksProceeded], scriptToUse, this.dataSource,  callback, this.parser).finally(() => {
+            await JobScheduler.init(this.MAX_CONCURRENT_PROCESSES, this.filters /* criteria, supposed to be query */, this.resolvedDataPath).exec(this._chunks[chunksProceeded], scriptToUse, this.dataSource, callback, this.parser).finally(() => {
                 chunksProceeded = chunksProceeded + 1
             })
         }
-        if(chunksProceeded == this._chunks.length) {
+        if (chunksProceeded == this._chunks.length) {
             this._files = [];
             this._chunks = [];
         }

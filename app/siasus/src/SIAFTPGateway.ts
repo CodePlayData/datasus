@@ -17,9 +17,8 @@
  */
 
 
-import { FTPClient } from "../../../lib/src/infra/ftp/FTPClient.js";
+import { DATASUSGenericFTPGateway, FTPClient } from "../../../lib/index.js";
 import { SIASubset } from "./SIASubset.js";
-import { DATASUSGenericFTPGateway } from "../../../lib/src/interface/gateway/DATASUSGenericFTPGateway.js";
 
 export class SIAFTPGateway extends DATASUSGenericFTPGateway<SIASubset> {
     private constructor(ftp: FTPClient) {

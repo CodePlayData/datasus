@@ -16,7 +16,8 @@
  *     limitations under the License.
  */
 
-import { DATASUSGateway } from "../../../lib/src/interface/gateway/DATASUSGateway.js";
+
+import { DATASUSGateway } from "../../../lib/index.js";
 import { SIASubset } from "./SIASubset.js";
 
 /**

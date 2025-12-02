@@ -2,12 +2,6 @@
 
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-// @filename: linkage.ts
-
-/*
- *     Copyright 2025 Pedro Paulo Teixeira dos Santos
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -22,22 +16,16 @@
  *     limitations under the License.
 */
 
-import { LinkageStrategy } from "../../lib/src/interface/linkage/LinkageStrategy.js";
 import { MongoClient } from "mongodb";
-import { MongoIndex } from "../../lib/src/infra/storage/MongoIndex.js";
-import { MongoMatchRepository } from "../../lib/src/infra/storage/MongoMatchRepository.js";
-import { SIASUSService } from "./src/SIASUSService.js";
-import { Criteria } from "../../lib/src/interface/criteria/Criteria.js";
-import { StringCriteria } from "../../lib/src/interface/criteria/StringCriteria.js";
-import { BPAIRecord } from "./src/BPAIRecord.js";
-import { SIAFTPGateway } from "./src/SIAFTPGateway.js";
-import { BasicFTPClient } from "../../lib/src/infra/ftp/BasicFTPClient.js";
+import { MongoIndex } from "../../lib/infra/storage/MongoIndex.js";
+import { LinkageStrategy } from "../../lib/interface/linkage/LinkageStrategy.js";
+import { MongoMatchRepository } from "../../lib/infra/storage/MongoMatchRepository.js";
+import { parser, sia, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
 const DB_NAME = 'datasus';
 const INDEX_COLLECTION = 'linkage_index';
 const MATCHES_COLLECTION = 'linkage_matches';
-const MAX_CONCURRENT_PROCESSES = 4;
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
@@ -49,16 +37,10 @@ const matchesCollection = db.collection(MATCHES_COLLECTION);
 const indexStrategy = new MongoIndex(indexCollection);
 const matchRepository = new MongoMatchRepository(matchesCollection);
 
-const strategy = new LinkageStrategy('Test Study', indexStrategy, matchRepository);
-const criteria = Criteria.set([
-    new StringCriteria<BPAIRecord>('223293', 'CBOPROF'),
-    new StringCriteria<BPAIRecord>('223208', 'CBOPROF')
-]);
+const strategy = new LinkageStrategy("Test study", indexStrategy, matchRepository);
 
-const ftpClient = await BasicFTPClient.connect('ftp.datasus.gov.br');
-if (!ftpClient) throw new Error('Could not connect to FTP');
-const gateway = await SIAFTPGateway.getInstanceOf(ftpClient);
-const sia = SIASUSService.init(gateway, criteria.toDTO(), MAX_CONCURRENT_PROCESSES);
+await strategy
+    .cohort(sia, { name: "SIASUS", subset, parser })
 
 
 

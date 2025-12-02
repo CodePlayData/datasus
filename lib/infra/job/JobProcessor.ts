@@ -16,12 +16,13 @@
     limitations under the License.
 */
 
-import {Dbc} from "../Dbc.js";
-import {appendFile, appendFileSync} from "node:fs";
-import {JobMessage} from "./JobMessage.js";
-import {Criteria} from "../../interface/criteria/Criteria.js";
-import {Records} from "../../core/Records.js";
-import {JobSummary} from "./JobSummary.js";
+import { Dbc } from "../Dbc.js";
+import { appendFile, appendFileSync } from "node:fs";
+import { join } from "node:path";
+import { JobMessage } from "./JobMessage.js";
+import { Criteria } from "../../interface/criteria/Criteria.js";
+import { Records } from "../../core/Records.js";
+import { JobSummary } from "./JobSummary.js";
 
 class ProcessRecordFailed extends Error {
     constructor() {
@@ -123,7 +124,7 @@ export class JobProcessor {
 
     private async initialize(): Promise<void> {
         try {
-            this.dbc = await Dbc.load(this.msg.dataPath + this.msg.file);
+            this.dbc = await Dbc.load(join(this.msg.dataPath || './', this.msg.file));
             this.summary.total = this.dbc.size;
             console.log(`O processo ${process.pid} iniciou o processamento do arquivo ${this.msg.file}.`);
         } catch (_) {
@@ -133,7 +134,7 @@ export class JobProcessor {
 
     private async finalize(): Promise<void> {
         try {
-            appendFileSync(`${this.msg.dataPath}summary.json`, JSON.stringify(this.summary));
+            appendFileSync(join(this.msg.dataPath || './', 'summary.json'), JSON.stringify(this.summary));
             console.log(
                 `\nO Processo ${process.pid} encerrou a leitura e o resumo dos jobs é:` +
                 `\n - Encontrados: ${this.summary.founds}` +

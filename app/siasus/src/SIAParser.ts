@@ -16,8 +16,7 @@
  *     limitations under the License.
  */
 
-import { Parser } from "../../../lib/src/interface/utils/Parser.js";
-import { Records } from "../../../lib/src/core/Records.js";
+import { Parser, Records } from "../../../lib/index.js";
 
 /**
  * Interface representing a parser for the SIA (Sistema de Informações de Ambulatoriais).

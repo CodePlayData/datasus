@@ -6,8 +6,10 @@
   "scripts": {
     "build": "tsc && copy LICENSE dist\\LICENSE && copy README.md dist\\README.md && copy package.json dist\\package.json",
     "build:lib": "tsc -p tsconfig.lib.json && copy LICENSE dist\\LICENSE && copy README.md dist\\README.md && copy package.json dist\\package.json",
+    "build:siasus": "tsc -p tsconfig.app.json",
     "publish": "npm run build:lib && npm publish ./dist --access=public",
-    "siasus:main": "npm run build && node --max-old-space-size=4096 ./dist/app/siasus/scripts/main.js",
+    "siasus:main": "npm run build:siasus && node --max-old-space-size=4096 ./dist/app/siasus/main.js",
+    "siasus:linkage": "npm run build:siasus && node --max-old-space-size=4096 ./dist/app/siasus/linkage.js",
     "test": "npx tsx test.ts"
   },
   "keywords": [

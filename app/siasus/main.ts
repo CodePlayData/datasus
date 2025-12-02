@@ -16,55 +16,20 @@
     limitations under the License.
 */
 
-import { BasicFTPClient } from "../../lib/src/infra/ftp/BasicFTPClient.js";
-import { SIASUSService } from "./src/SIASUSService.js";
-import { Criteria } from "../../lib/src/interface/criteria/Criteria.js";
-import { StringCriteria } from "../../lib/src/interface/criteria/StringCriteria.js";
-import { Records } from "../../lib/src/core/Records.js";
-import { BPAIRecord } from "./src/BPAIRecord.js";
 import { MongoClient } from "mongodb";
-import { SIAFTPGateway } from "./src/SIAFTPGateway.js";
-import { SIABasicParser } from "./src/SIABasicParser.js";
+import { Records } from "../../lib/index.js";
+import { sia, parser, subset } from "./service.js";
 
-const MAX_CONCURRENT_PROCESSES = 5;
-const FTP_HOST = 'ftp.datasus.gov.br';
 const MONGO_URI = 'mongodb://localhost:27017';
 const DB_NAME = 'datasus';
 const COLLECTION_NAME = 'siasus_records';
-
-const ftpClient = await BasicFTPClient.connect(FTP_HOST);
-const gateway = await SIAFTPGateway.getInstanceOf(ftpClient!);
-const BIDictionary = new Map<string, (value: any) => any>([
-    ['CNS_PAC', (value: string) => Buffer.from((value as String)).toString("hex")]
-]);
-
-const criteria = Criteria.set([
-    new StringCriteria<BPAIRecord>('223293', 'CBOPROF'),
-    new StringCriteria<BPAIRecord>('223208', 'CBOPROF')
-]);
-
-const sia = SIASUSService.init(gateway, criteria.toDTO(), MAX_CONCURRENT_PROCESSES);
-const parser = SIABasicParser.instanceOf(BIDictionary);
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
 const db = mongoClient.db(DB_NAME);
 const collection = db.collection(COLLECTION_NAME);
 
-await sia.subset({
-    src: 'BI',
-    states: ['RJ'],
-    period: {
-        start: {
-            year: 2022,
-            month: '04'
-        },
-        end: {
-            year: 2022,
-            month: '04'
-        }
-    }
-}, parser)
+await sia.subset(subset, parser)
 
 await sia.exec(
     async (record: Records) => {

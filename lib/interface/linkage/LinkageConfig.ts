@@ -16,7 +16,6 @@
  *     limitations under the License.
  */
 
-import { CriteriaObject } from "../criteria/CriteriaObject.js";
 import { WeightConfig } from "./WeightConfig.js";
 
 export type LinkageConfig = {
@@ -27,6 +26,5 @@ export type LinkageConfig = {
     blocking?: Record<string, string>;
     weights?: Record<string, WeightConfig>;
     threshold?: number;
-    criteria?: CriteriaObject[];
     subset?: any;
 };

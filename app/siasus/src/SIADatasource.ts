@@ -16,6 +16,6 @@
     limitations under the License.
 */
 
-import { Datasource } from "../../../lib/src/core/Datasource.js";
+import { Datasource } from "../../../lib/index.js";
 
 export type SIADatasource = Datasource & 'AB' | 'ABO' | 'ACF' | 'AD' | 'AM' | 'AN' | 'AQ' | 'AR' | 'ATD' | 'PA' | 'PS' | 'SAD' | 'BI'
