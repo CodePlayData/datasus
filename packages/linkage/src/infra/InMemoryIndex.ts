@@ -1,3 +1,5 @@
+// @filename: InMemoryIndex.ts
+
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
  *
@@ -14,13 +16,23 @@
  *     limitations under the License.
  */
 
-import { Collection } from "mongodb";
-import { MatchRepository } from "../../MatchRepository.js";
+import { IndexStrategy } from "../IndexStrategy.js";
 
-export class MongoMatchRepository implements MatchRepository {
-    constructor(private readonly collection: Collection) { }
+export class InMemoryIndex implements IndexStrategy {
+    private store = new Map<string, any[]>();
 
-    async save(match: any): Promise<void> {
-        await this.collection.insertOne(match);
+    async set(key: string, value: any): Promise<void> {
+        if (!this.store.has(key)) {
+            this.store.set(key, []);
+        }
+        this.store.get(key)!.push(value);
+    }
+
+    async get(key: string): Promise<any[]> {
+        return this.store.get(key) || [];
+    }
+
+    async has(key: string): Promise<boolean> {
+        return this.store.has(key);
     }
 }

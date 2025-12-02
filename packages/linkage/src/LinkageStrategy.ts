@@ -1,3 +1,5 @@
+// @filename: LinkageStrategy.ts
+
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
  *
@@ -19,7 +21,7 @@ import { Pipeline, Records, JobOrchestrator } from "@codeplaydata/datasus-core";
 import { IndexStrategy } from "./IndexStrategy.js";
 import { CohortConfig } from "./CohortConfig.js";
 import { LinkageConfig } from "./LinkageConfig.js";
-import { InMemoryIndex } from "./infra/storage/InMemoryIndex.js";
+import { InMemoryIndex } from "./infra/InMemoryIndex.js";
 import { MatchRepository } from "./MatchRepository.js";
 
 export class LinkageStrategy implements Pipeline {
