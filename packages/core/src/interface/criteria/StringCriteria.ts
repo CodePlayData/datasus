@@ -22,9 +22,9 @@ import {Criteria} from "./Criteria.js";
 export class StringCriteria<RecordType extends Records> extends Criteria<RecordType> {
     readonly name: string;
     
-    constructor(readonly str: string, readonly objProp: string) {
+    constructor(readonly str: string, readonly objProp: keyof RecordType) {
         super()
-        this.name = objProp + '_FILTER';
+        this.name = objProp as string + '_FILTER';
     }
 
     match(item: RecordType): boolean {

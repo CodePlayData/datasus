@@ -1,3 +1,5 @@
+// @filename: MongoMatchRepository.ts
+
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
  *
@@ -15,7 +17,7 @@
  */
 
 import { Collection } from "mongodb";
-import { MatchRepository } from "../MatchRepository.js";
+import { MatchRepository } from "../interface/MatchRepository.js";
 
 export class MongoMatchRepository implements MatchRepository {
     constructor(private readonly collection: Collection) { }

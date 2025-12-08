@@ -1,3 +1,5 @@
+// @filename: MongoIndex.ts
+
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
  *
@@ -15,7 +17,7 @@
  */
 
 import { Collection } from "mongodb";
-import { IndexStrategy } from "../IndexStrategy.js";
+import { IndexStrategy } from "../interface/IndexStrategy";
 
 export class MongoIndex implements IndexStrategy {
     constructor(private readonly collection: Collection) { }

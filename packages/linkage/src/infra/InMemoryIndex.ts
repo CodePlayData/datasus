@@ -16,7 +16,7 @@
  *     limitations under the License.
  */
 
-import { IndexStrategy } from "../IndexStrategy.js";
+import { IndexStrategy } from "../interface/IndexStrategy";
 
 export class InMemoryIndex implements IndexStrategy {
     private store = new Map<string, any[]>();

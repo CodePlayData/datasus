@@ -18,11 +18,11 @@
 
 
 import { Pipeline, Records, JobOrchestrator } from "@codeplaydata/datasus-core";
-import { IndexStrategy } from "./IndexStrategy.js";
-import { CohortConfig } from "./CohortConfig.js";
-import { LinkageConfig } from "./LinkageConfig.js";
-import { InMemoryIndex } from "./infra/InMemoryIndex.js";
-import { MatchRepository } from "./MatchRepository.js";
+import { IndexStrategy } from "../interface/IndexStrategy";
+import { CohortConfig } from "./CohortConfig";
+import { LinkageConfig } from "../LinkageConfig";
+import { InMemoryIndex } from "../infra/InMemoryIndex";
+import { MatchRepository } from "../interface/MatchRepository";
 
 export class LinkageStrategy implements Pipeline {
     private cohortStep: { service: JobOrchestrator<any, any, any, any>; config: CohortConfig; blockingKeys: string[] } | null = null;

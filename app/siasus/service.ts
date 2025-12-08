@@ -18,10 +18,11 @@
 
 import { SIASUSService } from "./src/SIASUSService.js";
 import { BPAIRecord } from "./src/BPAIRecord.js";
-import { Criteria, StringCriteria, BasicFTPClient, ArrayCriteria } from "@codeplaydata/datasus-core";
+import { Criteria, BasicFTPClient, ArrayCriteria } from "@codeplaydata/datasus-core";
 import { SIAFTPGateway } from "./src/SIAFTPGateway.js";
 import { SIABasicParser } from "./src/SIABasicParser.js";
 import { CBO } from "./utils/CBO.js";
+import { SIASubset } from "./src/SIASubset";
 
 const MAX_CONCURRENT_PROCESSES = 5;
 const FTP_HOST = 'ftp.datasus.gov.br';
@@ -35,7 +36,7 @@ export const BIDictionary = new Map<string, (value: any) => any>([
     ['CNS_PAC', (value: string) => Buffer.from((value as String)).toString("hex")]
 ]);
 
-export const subset = {
+export const subset: SIASubset = {
     src: 'BI',
     states: ['RJ'],
     period: {
