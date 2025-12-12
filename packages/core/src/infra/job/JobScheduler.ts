@@ -16,13 +16,13 @@
     limitations under the License.
 */
 
-import {JobRunner} from "./JobRunner.js";
-import {Command} from "../Command.js";
-import {JobMessage} from "./JobMessage.js";
-import {Parser} from "../../interface/utils/Parser.js";
-import {Records} from "../../core/Records.js";
-import {CriteriaObject} from "../../interface/criteria/CriteriaObject.js";
-import {Datasource} from "../../core/Datasource.js";
+import { JobRunner } from "./JobRunner.js";
+import { Command } from "../Command.js";
+import { JobMessage } from "./JobMessage.js";
+import { Parser } from "../../interface/utils/Parser.js";
+import { Records } from "../../core/Records.js";
+import { CriteriaObject } from "../../interface/criteria/CriteriaObject.js";
+import { Datasource } from "../../core/Datasource.js";
 
 class FailToScheduleJob extends Error {
     constructor() {
@@ -38,11 +38,11 @@ class FailToScheduleJob extends Error {
 
 export class JobScheduler<D extends Datasource> implements Command {
     private filesProcessed: number = 0;
-    
-    private constructor(readonly MAX_CONCURRENT_PROCESSES:number = 2, readonly criteria?: CriteriaObject[], readonly DATA_PATH?: string) {
+
+    private constructor(readonly MAX_CONCURRENT_PROCESSES: number = 2, readonly criteria?: CriteriaObject[], readonly DATA_PATH?: string) {
     }
 
-    static init(MAX_CONCURRENT_PROCESSES?:number, criteria?: CriteriaObject[], DATA_PATH?: string) {
+    static init(MAX_CONCURRENT_PROCESSES?: number, criteria?: CriteriaObject[], DATA_PATH?: string) {
         return new JobScheduler(MAX_CONCURRENT_PROCESSES, criteria, DATA_PATH)
     }
 
@@ -53,20 +53,23 @@ export class JobScheduler<D extends Datasource> implements Command {
 
     async exec(chunk: string[] | JobMessage[], jobScript: string, dataSource?: D, callback?: Function, parser?: Parser<Records>, progressCallback?: Function): Promise<void> {
         try {
-            const jobMessage = this.createJobMessage(chunk, dataSource);
-            await JobRunner.init(jobScript).exec(jobMessage, callback, parser, progressCallback);
-            this.incrementFilesProcessed();
-            if(this.filesProcessed < chunk.length) return this.exec(chunk, jobScript, dataSource, callback);
-            return Promise.resolve();
+            const promises = chunk.map((item) => {
+                const jobMessage = this.createJobMessage(item, dataSource);
+                return JobRunner.init(jobScript).exec(jobMessage, callback, parser, progressCallback)
+                    .then(() => {
+                        this.incrementFilesProcessed();
+                    })
+            })
+            await Promise.all(promises);
         } catch (_) {
             FailToScheduleJob.exception()
         }
     }
 
-    private createJobMessage(chunk: string[] | JobMessage[], dataSource?: D) {
+    private createJobMessage(item: string | JobMessage, dataSource?: D) {
         return {
             src: dataSource,
-            file: chunk[this.filesProcessed] as string,
+            file: item as string,
             criteria: this.criteria,
             dataPath: this.DATA_PATH
         }

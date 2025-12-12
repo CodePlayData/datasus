@@ -29,6 +29,8 @@ import { Pipeline } from "./interface/pipeline/Pipeline.js";
 import { Criteria } from "./interface/criteria/Criteria.js";
 import { StringCriteria } from "./interface/criteria/StringCriteria.js";
 import { ArrayCriteria } from "./interface/criteria/ArrayCriteria.js";
+import { DbcReader } from "./infra/DbcReader.js";
+import { DbcWriter } from "./infra/DbcWriter.js";
 
 export {
     DATASUSGenericFTPGateway,
@@ -43,5 +45,7 @@ export {
     Criteria,
     StringCriteria,
     ArrayCriteria,
-    Pipeline
+    Pipeline,
+    DbcReader,
+    DbcWriter
 }

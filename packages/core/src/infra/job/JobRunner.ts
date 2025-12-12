@@ -52,6 +52,10 @@ export class JobRunner implements Command {
                             process.stdout.write(`[child ${msg.pid ?? ''}] ${file}: ${msg.pct}% (${processed}/${total})\r`);
                             if (msg.pct === 100) process.stdout.write('\n');
                         }
+                    } else if (msg.type === 'metadata') {
+                        if (callback) {
+                            callback(msg);
+                        }
                     }
                 } else {
                     const parsedMsg = parser ? parser.parse(msg as unknown as Records) : msg;

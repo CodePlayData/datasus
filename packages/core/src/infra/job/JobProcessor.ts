@@ -16,7 +16,7 @@
     limitations under the License.
 */
 
-import { Dbc } from "../Dbc.js";
+import { DbcReader } from "../DbcReader.js";
 import { appendFile, appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { JobMessage } from "./JobMessage.js";
@@ -50,7 +50,7 @@ class CouldNotCleanUp extends Error {
 
 export class JobProcessor {
     private summary: JobSummary;
-    private dbc: Dbc | null;
+    private dbc: DbcReader | null;
     private msg: JobMessage;
 
     constructor(msg: JobMessage) {
@@ -124,7 +124,9 @@ export class JobProcessor {
 
     private async initialize(): Promise<void> {
         try {
-            this.dbc = await Dbc.load(join(this.msg.dataPath || './', this.msg.file));
+            this.dbc = await DbcReader.load(join(this.msg.dataPath || './', this.msg.file));
+            // @ts-ignore
+            process.send?.({ type: 'metadata', fields: this.dbc.fields });
             this.summary.total = this.dbc.size;
             console.log(`O processo ${process.pid} iniciou o processamento do arquivo ${this.msg.file}.`);
         } catch (_) {

@@ -24,7 +24,7 @@ import { SIABasicParser } from "./src/SIABasicParser.js";
 import { CBO } from "./utils/CBO.js";
 import { SIASubset } from "./src/SIASubset";
 
-const MAX_CONCURRENT_PROCESSES = 5;
+const MAX_CONCURRENT_PROCESSES = 4;
 const FTP_HOST = 'ftp.datasus.gov.br';
 const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 const gateway = await SIAFTPGateway.getInstanceOf(ftpClient!);
@@ -41,12 +41,12 @@ export const subset: SIASubset = {
     states: ['RJ'],
     period: {
         start: {
-            year: 2025,
-            month: '09'
+            year: 2008,
+            month: '01'
         },
         end: {
             year: 2025,
-            month: '09'
+            month: '10'
         }
     }
 }
