@@ -26,6 +26,7 @@ import { JobOrchestrator } from "./infra/job/JobOrchestrator.js";
 import { DATASUSGenericFTPGateway } from "./interface/gateway/DATASUSGenericFTPGateway.js";
 import { Datasource } from "./core/Datasource.js";
 import { Pipeline } from "./interface/pipeline/Pipeline.js";
+import { RecordProvider } from "./interface/pipeline/RecordProvider.js";
 import { Criteria } from "./interface/criteria/Criteria.js";
 import { StringCriteria } from "./interface/criteria/StringCriteria.js";
 import { ArrayCriteria } from "./interface/criteria/ArrayCriteria.js";
@@ -46,6 +47,7 @@ export {
     StringCriteria,
     ArrayCriteria,
     Pipeline,
+    RecordProvider,
     DbcReader,
     DbcWriter
 }

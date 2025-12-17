@@ -17,16 +17,17 @@
  */
 
 
-import { Pipeline, Records, JobOrchestrator } from "@codeplaydata/datasus-core";
+import { Pipeline, Records } from "@codeplaydata/datasus-core";
 import { IndexStrategy } from "../interface/IndexStrategy";
 import { CohortConfig } from "./CohortConfig";
 import { LinkageConfig } from "../LinkageConfig";
 import { InMemoryIndex } from "../infra/InMemoryIndex";
 import { MatchRepository } from "../interface/MatchRepository";
+import { RecordProvider } from "@codeplaydata/datasus-core";
 
 export class LinkageStrategy implements Pipeline {
-    private cohortStep: { service: JobOrchestrator<any, any, any, any>; config: CohortConfig; blockingKeys: string[] } | null = null;
-    private linkageSteps: { service: JobOrchestrator<any, any, any, any>; config: LinkageConfig }[] = [];
+    private cohortStep: { service: RecordProvider; config: CohortConfig; blockingKeys: string[] } | null = null;
+    private linkageSteps: { service: RecordProvider; config: LinkageConfig }[] = [];
 
     constructor(
         readonly name: string,
@@ -34,12 +35,12 @@ export class LinkageStrategy implements Pipeline {
         private readonly matchRepository?: MatchRepository
     ) { }
 
-    cohort(service: JobOrchestrator<any, any, any, any>, config: CohortConfig): LinkageStrategy {
+    cohort(service: RecordProvider, config: CohortConfig): LinkageStrategy {
         this.cohortStep = { service, config, blockingKeys: [] };
         return this;
     }
 
-    link(service: JobOrchestrator<any, any, any, any>, config: LinkageConfig): LinkageStrategy {
+    link(service: RecordProvider, config: LinkageConfig): LinkageStrategy {
         this.linkageSteps.push({ service, config });
         return this;
     }
@@ -60,7 +61,9 @@ export class LinkageStrategy implements Pipeline {
         console.log(`[LinkageStrategy] Starting Cohort: ${this.cohortStep.config.name}`);
 
         if (this.cohortStep.config.subset) {
-            await this.cohortStep.service.subset(this.cohortStep.config.subset, this.cohortStep.config.parser);
+            if (this.cohortStep.service.subset) {
+                await this.cohortStep.service.subset(this.cohortStep.config.subset, this.cohortStep.config.parser);
+            }
         }
 
         await this.cohortStep.service.exec(async (record: Records) => {
@@ -76,7 +79,9 @@ export class LinkageStrategy implements Pipeline {
             console.log(`[LinkageStrategy] Starting Linkage: ${step.config.name}`);
 
             if (step.config.subset) {
-                await step.service.subset(step.config.subset);
+                if (step.config.subset && step.service.subset) {
+                    await step.service.subset(step.config.subset);
+                }
             }
 
             const stepBlockingConfig = step.config.blocking || step.config.on;
