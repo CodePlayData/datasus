@@ -16,18 +16,32 @@
  *     limitations under the License.
 */
 
+import { MongoClient } from "mongodb";
 // @ts-ignore
 import { Records, DbcWriter } from "@codeplaydata/datasus-core";
-import {parser, sinan, subset} from "./service.js";
+import { parser, sinan, subset } from "./service.js";
+
+const MONGO_URI = 'mongodb://localhost:27017';
+const DB_NAME = 'sinan';
+const COLLECTION_NAME = 'tb';
+
+const mongoClient = new MongoClient(MONGO_URI);
+await mongoClient.connect();
+const db = mongoClient.db(DB_NAME);
+const collection = db.collection(COLLECTION_NAME);
 
 await sinan.subset(subset, parser)
 await sinan.exec(
-    (record: Records) => {
-        console.log(record);
+    async (message: any) => {
+        if (message.type === 'metadata') {
+        } else {
+            await collection.insertOne(message);
+        }
     }
 ).finally(
     async () => {
         console.log('Done!');
+        await mongoClient.close();
         process.exit(0);
     }
 )

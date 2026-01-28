@@ -33,18 +33,26 @@ export class JobRunner implements Command {
     async exec(jobMsg: JobMessage, callback?: Function, parser?: Parser<Records>, progressCallback?: Function) {
         return new Promise((resolve, reject) => {
             const child: ChildProcess = fork(this.jobScript);
-            child.on('exit', (code, signal) => {
-                if (signal) {
-                    reject(`Foi fechado pelo sinal: ${signal} com o código ${code}`)
+            const pendingPromises: Promise<void>[] = [];
+
+            child.on('exit', async (code, signal) => {
+                try {
+                    await Promise.all(pendingPromises);
+                    if (signal) {
+                        reject(`Foi fechado pelo sinal: ${signal} com o código ${code}`)
+                    }
+                    resolve(true)
+                } catch (e) {
+                    reject(e)
                 }
-                resolve(true)
             });
             child.on('message', (msg: any) => {
                 const isTypedEvent = msg && typeof msg === 'object' && 'type' in msg;
                 if (isTypedEvent) {
                     if (msg.type === 'progress') {
                         if (progressCallback) {
-                            progressCallback(msg);
+                            const promise = progressCallback(msg);
+                            if (promise instanceof Promise) pendingPromises.push(promise);
                         } else if (typeof msg.pct === 'number') {
                             const file = msg.file || jobMsg.file;
                             const processed = msg.processed ?? '?';
@@ -54,13 +62,15 @@ export class JobRunner implements Command {
                         }
                     } else if (msg.type === 'metadata') {
                         if (callback) {
-                            callback(msg);
+                            const promise = callback(msg);
+                            if (promise instanceof Promise) pendingPromises.push(promise);
                         }
                     }
                 } else {
                     const parsedMsg = parser ? parser.parse(msg as unknown as Records) : msg;
                     if (callback) {
-                        callback(parsedMsg)
+                        const promise = callback(parsedMsg);
+                        if (promise instanceof Promise) pendingPromises.push(promise);
                     }
                 }
             });

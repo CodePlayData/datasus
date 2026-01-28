@@ -32,6 +32,6 @@ export const MockedDictionary = new Map<string, (value: any) => any>([
     ['', (value: string) => undefined]
 ]);
 
-export const subset: SINANSubset = { src: 'TUBE', year: [2024] };
+export const subset: SINANSubset = { src: 'TUBE', year: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024] };
 export const parser: SINANParser = SINANBasicParser.instanceOf(MockedDictionary);
 export const sinan = SINANService.init(gateway, undefined, MAX_CONCURRENT_PROCESSES, "E:/DatasusFiles/")
