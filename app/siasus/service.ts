@@ -52,4 +52,4 @@ export const subset: SIASubset = {
 }
 
 export const parser = SIABasicParser.instanceOf(BIDictionary);
-export const sia = SIASUSService.init(gateway, criteria.toDTO(), MAX_CONCURRENT_PROCESSES, "F:/DatasusFiles/");
+export const sia = SIASUSService.init(gateway, criteria.toDTO(), MAX_CONCURRENT_PROCESSES, "E:/DatasusFiles/");

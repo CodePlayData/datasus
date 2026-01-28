@@ -37,7 +37,7 @@ await sia.subset(subset, parser)
 await sia.exec(
     async (message: any) => {
         if (message.type === 'metadata') {
-            await DbcWriter.initialize('F:/DatasusFiles/result.dbc', message.fields);
+            await DbcWriter.initialize('E:/DatasusFiles/result.dbc', message.fields);
         } else {
             await DbcWriter.getInstance().write(message);
         }

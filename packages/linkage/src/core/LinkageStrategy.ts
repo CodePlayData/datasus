@@ -23,11 +23,10 @@ import { CohortConfig } from "./CohortConfig";
 import { LinkageConfig } from "../LinkageConfig";
 import { InMemoryIndex } from "../infra/InMemoryIndex";
 import { MatchRepository } from "../interface/MatchRepository";
-import { RecordProvider } from "@codeplaydata/datasus-core";
 
 export class LinkageStrategy implements Pipeline {
-    private cohortStep: { service: RecordProvider; config: CohortConfig; blockingKeys: string[] } | null = null;
-    private linkageSteps: { service: RecordProvider; config: LinkageConfig }[] = [];
+    private cohortStep: { service: any; config: CohortConfig; blockingKeys: string[] } | null = null;
+    private linkageSteps: { service: any; config: LinkageConfig }[] = [];
 
     constructor(
         readonly name: string,
@@ -35,12 +34,12 @@ export class LinkageStrategy implements Pipeline {
         private readonly matchRepository?: MatchRepository
     ) { }
 
-    cohort(service: RecordProvider, config: CohortConfig): LinkageStrategy {
+    cohort(service: any, config: CohortConfig): LinkageStrategy {
         this.cohortStep = { service, config, blockingKeys: [] };
         return this;
     }
 
-    link(service: RecordProvider, config: LinkageConfig): LinkageStrategy {
+    link(service: any, config: LinkageConfig): LinkageStrategy {
         this.linkageSteps.push({ service, config });
         return this;
     }

@@ -20,7 +20,6 @@
 import { SplitIntoChunks } from "../SplitIntoChunks.js";
 import { JobScheduler } from "./JobScheduler.js";
 import { Command } from "../Command.js";
-import { RecordProvider } from "../../interface/pipeline/RecordProvider.js";
 import { Subset } from "../../core/Subset.js";
 import { DATASUSGateway } from "../../interface/gateway/DATASUSGateway.js";
 import { Parser } from "../../interface/utils/Parser.js";
@@ -35,7 +34,7 @@ export class JobOrchestrator<
     D extends Datasource,
     G extends DATASUSGateway<S>,
     P extends Parser<Records>
-> implements Command, RecordProvider {
+> implements Command {
     private _files: string[] = [];
     private _chunks: string[][] = [[]];
     private dataSource: D | undefined;
