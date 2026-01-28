@@ -1,3 +1,5 @@
+// @filename: DATASUSBaseFTPGateway.ts
+
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
  *
@@ -14,15 +16,15 @@
  *     limitations under the License.
 */
 
-import { DATASUSStatePeriodFTPGateway } from "./DATASUSStatePeriodFTPGateway.js";
-import { Subset } from "../../core/Subset.js";
-import { FTPClient } from "../../infra/ftp/FTPClient.js";
+import {FTPClient} from "../../infra/ftp/FTPClient.js";
+import {Subset} from "../../core/Subset.js";
 
-/**
- * @deprecated Use DATASUSStatePeriodFTPGateway or DATASUSCountryYearFTPGateway instead.
- */
-export abstract class DATASUSGenericFTPGateway<S extends Subset> extends DATASUSStatePeriodFTPGateway<S> {
-    constructor(client: FTPClient, PATH: string) {
-        super(client, PATH);
+export abstract class DATASUSBaseFTPGateway<S extends Subset> {
+    constructor(readonly client: FTPClient, readonly PATH: string) {}
+
+    abstract list(input: S, display?: 'full' | 'short'): Promise<any[]>;
+
+    async get(file: string, dest?: string) {
+        return await this.client?.download(dest || file, this.PATH+file);
     }
 }

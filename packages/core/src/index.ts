@@ -24,6 +24,9 @@ import { DATASUSGateway } from "./interface/gateway/DATASUSGateway.js";
 import { Parser } from "./interface/utils/Parser.js";
 import { JobOrchestrator } from "./infra/job/JobOrchestrator.js";
 import { DATASUSGenericFTPGateway } from "./interface/gateway/DATASUSGenericFTPGateway.js";
+import { DATASUSBaseFTPGateway } from "./interface/gateway/DATASUSBaseFTPGateway.js";
+import { DATASUSStatePeriodFTPGateway } from "./interface/gateway/DATASUSStatePeriodFTPGateway.js";
+import { DATASUSCountryYearFTPGateway } from "./interface/gateway/DATASUSCountryYearFTPGateway.js";
 import { Datasource } from "./core/Datasource.js";
 import { Pipeline } from "./interface/pipeline/Pipeline.js";
 import { Criteria } from "./interface/criteria/Criteria.js";
@@ -34,6 +37,9 @@ import { DbcWriter } from "./infra/DbcWriter.js";
 
 export {
     DATASUSGenericFTPGateway,
+    DATASUSBaseFTPGateway,
+    DATASUSStatePeriodFTPGateway,
+    DATASUSCountryYearFTPGateway,
     JobOrchestrator,
     Parser,
     DATASUSGateway,

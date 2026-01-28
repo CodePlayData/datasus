@@ -16,9 +16,9 @@
  *     limitations under the License.
  */
 
-import { RecordProvider, DbcReader } from "@codeplaydata/datasus-core";
+import { DbcReader } from "@codeplaydata/datasus-core";
 
-export class DbcRecordProvider implements RecordProvider {
+export class DbcRecordProvider {
     private reader: DbcReader | undefined;
 
     constructor(private readonly filePath: string) { }
@@ -31,7 +31,7 @@ export class DbcRecordProvider implements RecordProvider {
     async exec(callback: (record: any) => Promise<void>): Promise<void> {
         this.reader = await DbcReader.load(this.filePath);
         try {
-            await this.reader.forEachRecords(async (record) => {
+            await this.reader.forEachRecords(async (record: any) => {
                 await callback(record);
             });
         } finally {

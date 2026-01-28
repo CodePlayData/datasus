@@ -11,7 +11,7 @@
     "build:core": "npm run build -w @codeplaydata/datasus-core",
     "build:linkage": "npm run build -w @codeplaydata/datasus-linkage",
     "build:all": "tsc -b",
-    "build:siasus": "tsc -p tsconfig.app.json",
+    "build:siasus": "tsc -b --force tsconfig.app.json",
     "publish": "npm publish --workspaces --access=public",
     "siasus:main": "npm run build:siasus && node --max-old-space-size=4096 ./dist/app/siasus/main.js",
     "siasus:linkage": "npm run build:siasus && node --max-old-space-size=4096 ./dist/app/siasus/linkage.js",

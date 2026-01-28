@@ -16,10 +16,10 @@
  *     limitations under the License.
  */
 
-import { DATASUSGenericFTPGateway, FTPClient } from "@codeplaydata/datasus-core";
+import { DATASUSCountryYearFTPGateway, FTPClient } from "@codeplaydata/datasus-core";
 import { SINANSubset } from "./SINANSubset.js";
 
-export class SINANFTPGateway extends DATASUSGenericFTPGateway<SINANSubset> {
+export class SINANFTPGateway extends DATASUSCountryYearFTPGateway<SINANSubset> {
     private constructor(ftp: FTPClient) {
         super(ftp, '/dissemin/publicos/SINAN/DADOS/PRELIM/')
     }

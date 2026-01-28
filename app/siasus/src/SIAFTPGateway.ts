@@ -17,10 +17,10 @@
  */
 
 
-import { DATASUSGenericFTPGateway, FTPClient } from "@codeplaydata/datasus-core";
-import { SIASubset } from "./SIASubset.js";
+import {DATASUSStatePeriodFTPGateway, FTPClient} from "@codeplaydata/datasus-core";
+import {SIASubset} from "./SIASubset.js";
 
-export class SIAFTPGateway extends DATASUSGenericFTPGateway<SIASubset> {
+export class SIAFTPGateway extends DATASUSStatePeriodFTPGateway<SIASubset> {
     private constructor(ftp: FTPClient) {
         super(ftp, '/dissemin/publicos/SIASUS/200801_/Dados/')
     }
