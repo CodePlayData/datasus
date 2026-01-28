@@ -29,8 +29,6 @@ export class DATASUSCountryYearFTPGateway<S extends Subset> extends DATASUSBaseF
     async list(input: S, display: 'full' | 'short' = 'full') {
         let list = await this.client.list(this.PATH);
 
-        // Pattern: src + "BR" + YY (e.g. SINANBR23)
-        // input: { src: string, year: number[] }
         if ('src' in input && 'year' in input && Array.isArray(input.year)) {
             const prefixes = (input.year as number[]).map(y => {
                 const yy = y.toString().slice(-2);

@@ -18,12 +18,20 @@
 
 import {BasicFTPClient} from "@codeplaydata/datasus-core";
 import {SINANFTPGateway} from "./src/SINANFTPGateway.js";
-import {SINANSubset} from "./src/SINANSubset";
+import {SINANSubset} from "./src/SINANSubset.js";
+import {SINANService} from "./src/SINANService.js";
+import {SINANParser} from "./src/SINANParser.js";
+import {SINANBasicParser} from "./src/SINANBasicParser.js";
 
 const MAX_CONCURRENT_PROCESSES = 4;
 const FTP_HOST = 'ftp.datasus.gov.br';
 const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 const gateway = await SINANFTPGateway.getInstanceOf(ftpClient!);
 
+export const MockedDictionary = new Map<string, (value: any) => any>([
+    ['', (value: string) => undefined]
+]);
+
 export const subset: SINANSubset = { src: 'TUBE', year: [2024] };
-//export const sinan
+export const parser: SINANParser = SINANBasicParser.instanceOf(MockedDictionary);
+export const sinan = SINANService.init(gateway, undefined, MAX_CONCURRENT_PROCESSES, "E:/DatasusFiles/")

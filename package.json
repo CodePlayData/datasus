@@ -11,10 +11,11 @@
     "build:core": "npm run build -w @codeplaydata/datasus-core",
     "build:linkage": "npm run build -w @codeplaydata/datasus-linkage",
     "build:all": "tsc -b",
-    "build:siasus": "tsc -b --force tsconfig.app.json",
+    "build:app": "tsc -b --force tsconfig.app.json",
     "publish": "npm publish --workspaces --access=public",
-    "siasus:main": "npm run build:siasus && node --max-old-space-size=4096 ./dist/app/siasus/main.js",
-    "siasus:linkage": "npm run build:siasus && node --max-old-space-size=4096 ./dist/app/siasus/linkage.js",
+    "siasus:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/siasus/main.js",
+    "sinan:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sinan/main.js",
+    "siasus:linkage": "npm run build:app && node --max-old-space-size=4096 ./dist/app/siasus/linkage.js",
     "test": "npx tsx test.ts"
   },
   "keywords": [

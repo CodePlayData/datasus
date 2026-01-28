@@ -16,6 +16,18 @@
  *     limitations under the License.
 */
 
-import { MongoClient } from "mongodb";
 // @ts-ignore
 import { Records, DbcWriter } from "@codeplaydata/datasus-core";
+import {parser, sinan, subset} from "./service.js";
+
+await sinan.subset(subset, parser)
+await sinan.exec(
+    (record: Records) => {
+        console.log(record);
+    }
+).finally(
+    async () => {
+        console.log('Done!');
+        process.exit(0);
+    }
+)
