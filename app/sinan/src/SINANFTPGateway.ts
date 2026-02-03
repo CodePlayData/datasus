@@ -28,3 +28,9 @@ export class SINANFTPGateway extends DATASUSCountryYearFTPGateway<SINANSubset> {
         return new SINANFTPGateway(ftp)
     }
 }
+
+
+
+
+
+
