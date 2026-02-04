@@ -1,4 +1,4 @@
-// @filename: main.ts
+// @filename: service.ts
 
 /*
  *     Copyright 2026 Pedro Paulo Teixeira dos Santos
@@ -16,13 +16,15 @@
  *     limitations under the License.
 */
 
-import {MongoClient} from "mongodb";
+import {BasicFTPClient} from "@codeplaydata/datasus-core";
+import {SIHSUSFTPGateway} from "./src/SIHSUSFTPGateway.js";
 
-const MONGO_URI = 'mongodb://localhost:27017';
-const DB_NAME = 'sihsus';
-const COLLECTION_NAME = 'sanatorio';
+const MAX_CONCURRENT_PROCESSES = 4;
+const FTP_HOST = 'ftp.datasus.gov.br';
+const ftpClient = await BasicFTPClient.connect(FTP_HOST);
+const gateway = await SIHSUSFTPGateway.getInstanceOf(ftpClient!);
 
-const mongoClient = new MongoClient(MONGO_URI);
-await mongoClient.connect();
-const db = mongoClient.db(DB_NAME);
-const collection = db.collection(COLLECTION_NAME);
+export const MockedDictionary = new Map<string, (value: any) => any>([
+    ['', (value: string) => undefined]
+]);
+

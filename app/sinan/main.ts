@@ -42,5 +42,3 @@ await sinan.exec(
         process.exit(0);
     }
 )
-
-// total: 503,444

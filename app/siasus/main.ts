@@ -43,5 +43,3 @@ await sia.exec(
         process.exit(0);
     }
 );
-
-// 232,822

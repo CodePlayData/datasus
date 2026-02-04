@@ -1,4 +1,4 @@
-// @filename: main.ts
+// @filename: SIHSUSSubset.ts
 
 /*
  *     Copyright 2026 Pedro Paulo Teixeira dos Santos
@@ -14,15 +14,13 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
-*/
+ */
 
-import {MongoClient} from "mongodb";
+import {Subset} from "@codeplaydata/datasus-core";
+import {State} from "../../siasus/src/State.js";
+import {Period} from "../../siasus/src/Period.js";
+import {SIHSUSDatasource} from "./SIHSUSDatasource.js";
 
-const MONGO_URI = 'mongodb://localhost:27017';
-const DB_NAME = 'sihsus';
-const COLLECTION_NAME = 'sanatorio';
-
-const mongoClient = new MongoClient(MONGO_URI);
-await mongoClient.connect();
-const db = mongoClient.db(DB_NAME);
-const collection = db.collection(COLLECTION_NAME);
+export type SIHSUSSubset = Subset & { src: SIHSUSDatasource } |
+    { src: SIHSUSDatasource, states: State[] } |
+    { src: SIHSUSDatasource, states: State[], period: Period };

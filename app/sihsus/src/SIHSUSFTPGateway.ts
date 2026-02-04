@@ -1,4 +1,4 @@
-// @filename: main.ts
+// @filename: SIHSUSFTPGateway.ts
 
 /*
  *     Copyright 2026 Pedro Paulo Teixeira dos Santos
@@ -16,13 +16,15 @@
  *     limitations under the License.
 */
 
-import {MongoClient} from "mongodb";
+import {DATASUSStatePeriodFTPGateway, FTPClient} from "@codeplaydata/datasus-core";
+import {SIHSUSSubset} from "./SIHSUSSubset.js";
 
-const MONGO_URI = 'mongodb://localhost:27017';
-const DB_NAME = 'sihsus';
-const COLLECTION_NAME = 'sanatorio';
+export class SIHSUSFTPGateway extends DATASUSStatePeriodFTPGateway<SIHSUSSubset> {
+    private constructor(ftp: FTPClient) {
+        super(ftp, '/dissemin/publicos/SIHSUS/200801_/Dados/')
+    }
 
-const mongoClient = new MongoClient(MONGO_URI);
-await mongoClient.connect();
-const db = mongoClient.db(DB_NAME);
-const collection = db.collection(COLLECTION_NAME);
+    static async getInstanceOf(ftp: FTPClient) {
+        return new SIHSUSFTPGateway(ftp)
+    }
+}
