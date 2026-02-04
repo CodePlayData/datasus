@@ -19,5 +19,6 @@
 export type BPAIRecord = {
     CBOPROF: string;
     CNS_PAC: string;
+    CODUNI: string;
     [key: string]: any;
 };

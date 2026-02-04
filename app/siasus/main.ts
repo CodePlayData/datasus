@@ -20,8 +20,8 @@ import { MongoClient } from "mongodb";
 import { sia, parser, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
-const DB_NAME = 'datasus';
-const COLLECTION_NAME = 'siasus_records';
+const DB_NAME = 'siasus';
+const COLLECTION_NAME = 'sanatorio_amb';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();

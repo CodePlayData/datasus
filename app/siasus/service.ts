@@ -29,7 +29,8 @@ const FTP_HOST = 'ftp.datasus.gov.br';
 const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 const gateway = await SIAFTPGateway.getInstanceOf(ftpClient!);
 const criteria = Criteria.set([
-    new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF')
+    //new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF'),
+    new ArrayCriteria<BPAIRecord>(["2270196"], "CODUNI")
 ]);
 
 export const BIDictionary = new Map<string, (value: any) => any>([
@@ -41,12 +42,12 @@ export const subset: SIASubset = {
     states: ['RJ'],
     period: {
         start: {
-            year: 2025,
-            month: '10'
+            year: 2020,
+            month: '01'
         },
         end: {
             year: 2025,
-            month: '10'
+            month: '12'
         }
     }
 }
