@@ -17,8 +17,6 @@
 */
 
 import { MongoClient } from "mongodb";
-// @ts-ignore
-import { Records, DbcWriter } from "@codeplaydata/datasus-core";
 import { parser, sinan, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
@@ -33,8 +31,7 @@ const collection = db.collection(COLLECTION_NAME);
 await sinan.subset(subset, parser)
 await sinan.exec(
     async (message: any) => {
-        if (message.type === 'metadata') {
-        } else {
+        if (message.type === 'metadata') {} else {
             await collection.insertOne(message);
         }
     }
@@ -45,3 +42,5 @@ await sinan.exec(
         process.exit(0);
     }
 )
+
+// total: 503,444

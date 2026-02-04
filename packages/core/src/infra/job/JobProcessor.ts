@@ -71,7 +71,14 @@ export class JobProcessor {
         try {
             this.summary.founds++;
             // @ts-ignore
-            process.send(record);
+            if (process.send) {
+                await new Promise<void>((resolve, reject) => {
+                    process.send!(record, (error: Error | null) => {
+                        if (error) reject(error);
+                        else resolve();
+                    });
+                });
+            }
         } catch (_) {
             this.summary.errors++;
             ProcessRecordFailed.exception()

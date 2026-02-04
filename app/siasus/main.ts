@@ -17,8 +17,6 @@
 */
 
 import { MongoClient } from "mongodb";
-// @ts-ignore
-import { Records, DbcWriter } from "@codeplaydata/datasus-core";
 import { sia, parser, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
@@ -32,27 +30,18 @@ const collection = db.collection(COLLECTION_NAME);
 
 await sia.subset(subset, parser)
 
-// const writer = new DbcWriter('F:/DatasusFiles/result.dbc');
-
 await sia.exec(
     async (message: any) => {
-        if (message.type === 'metadata') {
-            await DbcWriter.initialize('E:/DatasusFiles/result.dbc', message.fields);
-        } else {
-            await DbcWriter.getInstance().write(message);
+        if (message.type === 'metadata') {} else {
+            await collection.insertOne(message);
         }
     }
 ).finally(
     async () => {
-        try {
-            console.log('Closing DBC Writer...');
-            await DbcWriter.getInstance().close();
-            console.log('Saved!');
-        } catch (e) {
-            console.log('Nothing to save or error closing writer.');
-        }
         console.log('Done!');
-        // await mongoClient.close();
+        await mongoClient.close();
         process.exit(0);
     }
 );
+
+// 232,822
