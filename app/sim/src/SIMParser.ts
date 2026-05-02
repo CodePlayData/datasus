@@ -1,4 +1,4 @@
-// @filename: SIASubset.ts
+// @filename: SIMParser.ts
 
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
@@ -16,11 +16,6 @@
  *     limitations under the License.
  */
 
-import { SIADatasource } from "./SIADatasource.js";
-import { State } from "./State.js";
-import { Period } from "./Period.js";
-import { Subset } from "@codeplaydata/datasus-core";
+import { Parser, Records } from "@codeplaydata/datasus-core";
 
-export type SIASubset = Subset & { src: SIADatasource }      |
-    { src: SIADatasource, states: State[] }                  |
-    { src: SIADatasource, states: State[], period: Period };
+export interface SIAParser extends Parser<Records> { }

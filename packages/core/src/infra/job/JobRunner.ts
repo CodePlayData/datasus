@@ -22,7 +22,74 @@ import { JobMessage } from "./JobMessage.js";
 import { Parser } from "../../interface/utils/Parser.js";
 import { Records } from "../../core/Records.js";
 
+const activeJobs = new Map<number | string, string>();
+let lastLines = 0;
+
 export class JobRunner implements Command {
+    static totalJobs = 0;
+    static finishedJobs = 0;
+    static startTime = 0;
+    static globalSummary = { total: 0, founds: 0, errors: 0 };
+
+    static printGlobalSummary() {
+        const timeDiff = Date.now() - JobRunner.startTime;
+        const seconds = Math.floor((timeDiff / 1000) % 60);
+        const minutes = Math.floor((timeDiff / (1000 * 60)) % 60);
+        const hours = Math.floor((timeDiff / (1000 * 60 * 60)) % 24);
+
+        let timeStr = '';
+        if (hours > 0) timeStr += `${hours}h `;
+        if (minutes > 0 || hours > 0) timeStr += `${minutes}m `;
+        timeStr += `${seconds}s`;
+
+        const fmt = (n: number) => n.toLocaleString('pt-BR');
+
+        if (lastLines > 0) {
+            process.stdout.write(`\x1b[${lastLines}A`);
+            process.stdout.write('\x1b[J');
+            lastLines = 0;
+        }
+
+        const summaryText = `\n\x1b[1m=== RESUMO GLOBAL DA EXECUÇÃO ===\x1b[0m\n` +
+            `Tempo total percorrido: \x1b[36m${timeStr}\x1b[0m\n` +
+            `Total de registros lidos: \x1b[36m${fmt(JobRunner.globalSummary.total)}\x1b[0m\n` +
+            `Total de registros encontrados: \x1b[32m${fmt(JobRunner.globalSummary.founds)}\x1b[0m\n` +
+            `Total de registros perdidos por erro: \x1b[31m${fmt(JobRunner.globalSummary.errors)}\x1b[0m\n\n`;
+
+        process.stdout.write(summaryText);
+    }
+
+    static renderConsole(completedJobText?: string) {
+        if (lastLines > 0) {
+            process.stdout.write(`\x1b[${lastLines}A`);
+            process.stdout.write('\x1b[J');
+        }
+
+        if (completedJobText) {
+            process.stdout.write(`${completedJobText}\n`);
+        }
+
+        if (JobRunner.totalJobs > 0) {
+            const header = `\x1b[35mPrevisão: ${JobRunner.finishedJobs} arquivos lidos de ${JobRunner.totalJobs} arquivos totais.\x1b[0m\n`;
+            process.stdout.write(header);
+
+            let activeLines = 0;
+            for (const line of activeJobs.values()) {
+                process.stdout.write(`${line}\n`);
+                activeLines++;
+            }
+
+            lastLines = 1 + activeLines;
+        } else {
+            let activeLines = 0;
+            for (const line of activeJobs.values()) {
+                process.stdout.write(`${line}\n`);
+                activeLines++;
+            }
+            lastLines = activeLines;
+        }
+    }
+
     private constructor(private jobScript: string) {
     }
 
@@ -53,12 +120,30 @@ export class JobRunner implements Command {
                         if (progressCallback) {
                             const promise = progressCallback(msg);
                             if (promise instanceof Promise) pendingPromises.push(promise);
-                        } else if (typeof msg.pct === 'number') {
-                            const file = msg.file || jobMsg.file;
-                            const processed = msg.processed ?? '?';
-                            const total = msg.total ?? '?';
-                            process.stdout.write(`[child ${msg.pid ?? ''}] ${file}: ${msg.pct}% (${processed}/${total})\r`);
-                            if (msg.pct === 100) process.stdout.write('\n');
+                        } else {
+                            const pid = msg.pid ?? 'unknown';
+                            const coloredPid = `\x1b[36m[child ${pid}]\x1b[0m`;
+                            const coloredFile = `\x1b[33m${msg.file}\x1b[0m`;
+                            if (msg.status === 'started') {
+                                activeJobs.set(pid, `${coloredPid} ${coloredFile}: \x1b[90mIniciando o processamento...\x1b[0m`);
+                                JobRunner.renderConsole();
+                            } else if (msg.status === 'running') {
+                                const processed = msg.processed ?? '?';
+                                const total = msg.total ?? '?';
+                                activeJobs.set(pid, `${coloredPid} ${coloredFile}: \x1b[32m${msg.pct}% (${processed}/${total})\x1b[0m`);
+                                JobRunner.renderConsole();
+                            } else if (msg.status === 'finished') {
+                                const summary = msg.summary;
+                                JobRunner.globalSummary.total += summary.total;
+                                JobRunner.globalSummary.founds += summary.founds;
+                                JobRunner.globalSummary.errors += summary.errors;
+
+                                const fmt = (n: number) => n.toLocaleString('pt-BR');
+                                const text = `${coloredPid} ${coloredFile}: \x1b[32m100% (${summary.total}/${summary.total})\x1b[0m - O Processo ${pid} encerrou a leitura e o resumo dos jobs é de \x1b[1m\x1b[32m${fmt(summary.founds)} Registros Encontrados\x1b[0m, de um total de \x1b[36m${fmt(summary.total)}\x1b[0m Registros e com \x1b[31m${fmt(summary.errors)}\x1b[0m Registros Perdidos por Erro.`;
+                                activeJobs.delete(pid);
+                                JobRunner.finishedJobs++;
+                                JobRunner.renderConsole(text);
+                            }
                         }
                     } else if (msg.type === 'metadata') {
                         if (callback) {

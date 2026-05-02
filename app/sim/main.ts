@@ -1,7 +1,7 @@
 // @filename: main.ts
 
 /*
- *     Copyright 2025 Pedro Paulo Teixeira dos Santos
+ *     Copyright 2026 Pedro Paulo Teixeira dos Santos
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import { MongoClient } from "mongodb";
 import { sia, parser, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
-const DB_NAME = 'siasus';
-const COLLECTION_NAME = 'sanatorio_amb';
+const DB_NAME = 'sim';
+const COLLECTION_NAME = 'upa_deaths';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();

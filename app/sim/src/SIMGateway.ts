@@ -1,7 +1,7 @@
-// @filename: SIASubset.ts
+// @filename: SIMGateway.ts
 
 /*
- *     Copyright 2025 Pedro Paulo Teixeira dos Santos
+ *     Copyright 2026 Pedro Paulo Teixeira dos Santos
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -16,11 +16,7 @@
  *     limitations under the License.
  */
 
-import { SIADatasource } from "./SIADatasource.js";
-import { State } from "./State.js";
-import { Period } from "./Period.js";
-import { Subset } from "@codeplaydata/datasus-core";
+import { DATASUSGateway } from "@codeplaydata/datasus-core";
+import {SIMSubset} from "./SIMSubset";
 
-export type SIASubset = Subset & { src: SIADatasource }      |
-    { src: SIADatasource, states: State[] }                  |
-    { src: SIADatasource, states: State[], period: Period };
+export interface SIMGateway extends DATASUSGateway<SIMSubset> { }

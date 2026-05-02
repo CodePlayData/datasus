@@ -1,7 +1,7 @@
-// @filename: SIASubset.ts
+// @filename: TBNot.ts
 
 /*
- *     Copyright 2025 Pedro Paulo Teixeira dos Santos
+ *     Copyright 2026 Pedro Paulo Teixeira dos Santos
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -14,13 +14,7 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
- */
+*/
 
-import { SIADatasource } from "./SIADatasource.js";
-import { State } from "./State.js";
-import { Period } from "./Period.js";
-import { Subset } from "@codeplaydata/datasus-core";
-
-export type SIASubset = Subset & { src: SIADatasource }      |
-    { src: SIADatasource, states: State[] }                  |
-    { src: SIADatasource, states: State[], period: Period };
+export type TBNot = {
+}

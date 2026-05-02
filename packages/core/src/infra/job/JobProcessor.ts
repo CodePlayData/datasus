@@ -98,13 +98,13 @@ export class JobProcessor {
                 const pct = Math.floor((processed / total) * 100);
                 if (pct !== lastPct && pct % step === 0) {
                     // @ts-ignore
-                    process.send?.({ type: 'progress', pct, processed, total, file: this.msg.file, pid: process.pid });
+                    process.send?.({ type: 'progress', status: 'running', pct, processed, total, file: this.msg.file, pid: process.pid });
                     lastPct = pct;
                 }
             };
             if (total > 0) {
                 // @ts-ignore
-                process.send?.({ type: 'progress', pct: 0, processed: 0, total, file: this.msg.file, pid: process.pid });
+                process.send?.({ type: 'progress', status: 'running', pct: 0, processed: 0, total, file: this.msg.file, pid: process.pid });
             }
             await this.dbc!.forEachRecords(async (record: Records) => {
                 try {
@@ -118,10 +118,7 @@ export class JobProcessor {
                     ProcessRecordFailed.exception()
                 }
             });
-            if (total > 0 && processed >= total) {
-                // @ts-ignore
-                process.send?.({ type: 'progress', pct: 100, processed, total, file: this.msg.file, pid: process.pid });
-            }
+            // Removed the redundant 100% emission because 'finished' will handle it.
             await this.finalize();
         } catch (_) {
             ProcessFatal.exception(process.pid.toString());
@@ -135,7 +132,8 @@ export class JobProcessor {
             // @ts-ignore
             process.send?.({ type: 'metadata', fields: this.dbc.fields });
             this.summary.total = this.dbc.size;
-            console.log(`O processo ${process.pid} iniciou o processamento do arquivo ${this.msg.file}.`);
+            // @ts-ignore
+            process.send?.({ type: 'progress', status: 'started', file: this.msg.file, pid: process.pid });
         } catch (_) {
             ProcessFatal.exception(process.pid.toString());
         }
@@ -144,12 +142,8 @@ export class JobProcessor {
     private async finalize(): Promise<void> {
         try {
             appendFileSync(join(this.msg.dataPath || './', 'summary.json'), JSON.stringify(this.summary));
-            console.log(
-                `\nO Processo ${process.pid} encerrou a leitura e o resumo dos jobs é:` +
-                `\n - Encontrados: ${this.summary.founds}` +
-                `\n - Total: ${this.summary.total}` +
-                `\n - Erros: ${this.summary.errors}\n`
-            );
+            // @ts-ignore
+            process.send?.({ type: 'progress', status: 'finished', summary: this.summary, file: this.msg.file, pid: process.pid, pct: 100 });
             await this.cleanup(0);
         } catch (_) {
             ProcessFatal.exception(process.pid.toString());

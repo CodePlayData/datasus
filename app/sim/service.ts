@@ -1,7 +1,7 @@
 // @filename: service.ts
 
 /*
- *     Copyright 2025 Pedro Paulo Teixeira dos Santos
+ *     Copyright 2026 Pedro Paulo Teixeira dos Santos
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -16,28 +16,25 @@
  *     limitations under the License.
 */
 
-import { SIASUSService } from "./src/SIASUSService.js";
-import { BPAIRecord } from "./utils/BPAIRecord.js";
+
 import { Criteria, BasicFTPClient, ArrayCriteria } from "@codeplaydata/datasus-core";
-import { SIAFTPGateway } from "./src/SIAFTPGateway.js";
-import { SIABasicParser } from "./src/SIABasicParser.js";
-import { CBO } from "./utils/CBO.js";
-import { SIASubset } from "./src/SIASubset.js";
+import {SIMSubset} from "./src/SIMSubset";
+
 
 const MAX_CONCURRENT_PROCESSES = 4;
 const FTP_HOST = 'ftp.datasus.gov.br';
 const ftpClient = await BasicFTPClient.connect(FTP_HOST);
-const gateway = await SIAFTPGateway.getInstanceOf(ftpClient!);
+const gateway = await SIMFTPGateway.getInstanceOf(ftpClient!);
 const criteria = Criteria.set([
     //new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF'),
-    new ArrayCriteria<BPAIRecord>(["2270196"], "CODUNI")
+    new ArrayCriteria<DOREG>(["2270196"], "CODUNI")
 ]);
 
 export const BIDictionary = new Map<string, (value: any) => any>([
     ['CNS_PAC', (value: string) => Buffer.from((value as String)).toString("hex")]
 ]);
 
-export const subset: SIASubset = {
+export const subset: SIMSubset = {
     src: 'BI',
     states: ['RJ'],
     period: {
@@ -47,10 +44,10 @@ export const subset: SIASubset = {
         },
         end: {
             year: 2025,
-            month: '01'
+            month: '12'
         }
     }
 }
 
-export const parser = SIABasicParser.instanceOf(BIDictionary);
-export const sia = SIASUSService.init(gateway, criteria.toDTO(), MAX_CONCURRENT_PROCESSES, "E:/DatasusFiles/");
+export const parser = SIMBasicParser.instanceOf(BIDictionary);
+export const sia = SIMSUSService.init(gateway, criteria.toDTO(), MAX_CONCURRENT_PROCESSES, "E:/DatasusFiles/");

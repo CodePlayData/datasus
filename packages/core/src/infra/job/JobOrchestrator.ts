@@ -19,6 +19,7 @@
 
 import { SplitIntoChunks } from "../SplitIntoChunks.js";
 import { JobScheduler } from "./JobScheduler.js";
+import { JobRunner } from "./JobRunner.js";
 import { Command } from "../Command.js";
 import { Subset } from "../../core/Subset.js";
 import { DATASUSGateway } from "../../interface/gateway/DATASUSGateway.js";
@@ -90,6 +91,10 @@ export class JobOrchestrator<
         }
         let chunksProceeded = 0;
         console.log(`\nSending Jobs.\n`);
+        JobRunner.totalJobs = this._files.length;
+        JobRunner.finishedJobs = 0;
+        JobRunner.startTime = Date.now();
+        JobRunner.globalSummary = { total: 0, founds: 0, errors: 0 };
         while (chunksProceeded < this._chunks.length) {
             await JobScheduler.init(this.MAX_CONCURRENT_PROCESSES, this.filters /* criteria, supposed to be query */, this.resolvedDataPath).exec(this._chunks[chunksProceeded], scriptToUse, this.dataSource, callback, this.parser).finally(() => {
                 chunksProceeded = chunksProceeded + 1
@@ -99,6 +104,7 @@ export class JobOrchestrator<
             this._files = [];
             this._chunks = [];
         }
+        JobRunner.printGlobalSummary();
         return
     }
 }
