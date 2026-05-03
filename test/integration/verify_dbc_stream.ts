@@ -1,6 +1,6 @@
 
 // @ts-ignore
-import { DbcWriter } from "@codeplaydata/datasus-core/dist/infra/DbcWriter.js";
+import { DbcWriter } from "packages/core/src/infra/dbc/DbcWriter.js";
 import { FieldDescriptor } from "dbffile";
 import { join } from "path";
 

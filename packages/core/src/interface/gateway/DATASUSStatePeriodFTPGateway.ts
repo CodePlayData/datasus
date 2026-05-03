@@ -31,7 +31,16 @@ export class DATASUSStatePeriodFTPGateway<S extends Subset> extends DATASUSBaseF
         let seq = [];
 
         if ('src' in input && 'states' in input && 'period' in input && 'month' in input.period.start && 'month' in input.period.end) {
-            if (input.period && input.period.start.year < 2008 || input.period && input.period.end.year > new Date(Date.now()).getFullYear()) {
+            const startMonth = parseInt(input.period.start.month, 10);
+            const endMonth = parseInt(input.period.end.month, 10);
+            const startYear = input.period.start.year;
+            const endYear = input.period.end.year;
+
+            if (
+                startYear < 2008 || endYear > new Date().getFullYear() ||
+                startMonth < 1 || startMonth > 12 ||
+                endMonth < 1 || endMonth > 12
+            ) {
                 throw new Error('Invalid Period.')
             }
 

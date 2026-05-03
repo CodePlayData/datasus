@@ -21,11 +21,31 @@ import { parse } from "node:path";
 import { DBFFile, FieldDescriptor } from 'dbffile';
 import { dbc2dbf } from "@codeplaydata/dbc2dbf"
 
+class CanNotExcludeDbcFile extends Error {
+    private constructor(readonly file: string) {
+        super(`A error occurred when deleting file: ${file}`)
+        this.name = 'CanNotExcludeDbcFile';
+        this.cause = 'The file was already excluded.'
+    }
+
+    static async exception<T = void>(file: string, fallbackFunction?: (error: CanNotExcludeDbcFile) => Promise<T>) {
+        const error = new CanNotExcludeDbcFile(file);
+        if(fallbackFunction) {
+            await fallbackFunction(error);
+        } else {
+            throw error;
+        }
+    }
+}
+
 export class DbcReader {
     size!: number;
     fields!: FieldDescriptor[];
 
-    private constructor(readonly dbf: DBFFile, private readonly io: { input: string, output: string }) {
+    private constructor(
+        readonly dbf: DBFFile,
+        private readonly io: { input: string, output: string }
+    ) {
         this.size = dbf.recordCount;
         this.fields = dbf.fields;
     }
@@ -50,11 +70,14 @@ export class DbcReader {
         return await this.dbf.readRecords(count || this.size)
     }
 
-    remove(): void {
+    remove<T = void>(verbose: boolean = true, fallbackFunction?: (error: CanNotExcludeDbcFile) => Promise<T>): void {
         const inputFilePath = parse(this.io.input);
-        unlink(this.io.output, (error: any) => {
-            if (error) CanNotExcludeDbcFile.exception(`${inputFilePath.name}${inputFilePath.ext}`);
-            console.log(`${inputFilePath.name}${inputFilePath.ext} excluded.`)
+        unlink(this.io.output, async (error: any) => {
+            if (error) {
+                await CanNotExcludeDbcFile.exception(`${inputFilePath.name}${inputFilePath.ext}`, fallbackFunction);
+            } else if (verbose) {
+                console.log(`${inputFilePath.name}${inputFilePath.ext} excluded.`);
+            }
         });
     }
 
@@ -65,14 +88,3 @@ export class DbcReader {
     }
 }
 
-export class CanNotExcludeDbcFile extends Error {
-    constructor(file: string) {
-        super(`A error occurred when deleting file: ${file}`)
-        this.name = 'CanNotExcludeDbcFile';
-        this.cause = 'The file was already excluded.'
-    }
-
-    static exception(file: string) {
-        throw new CanNotExcludeDbcFile(file)
-    }
-}

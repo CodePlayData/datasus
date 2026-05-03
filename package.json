@@ -15,7 +15,10 @@
     "siasus:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/siasus/main.js",
     "sinan:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sinan/main.js",
     "siasus:linkage": "npm run build:app && node --max-old-space-size=4096 ./dist/app/siasus/linkage.js",
-    "test": "npx tsx test.ts"
+    "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:unit": "npx tsx --test test/unit/**/*.test.ts",
+    "test:integration": "npx tsx --test test/integration/**/*.test.ts",
+    "test:e2e": "npx tsx --test-timeout 120000 --test test/e2e/**/*.test.ts"
   },
   "keywords": [
     "DATASUS",

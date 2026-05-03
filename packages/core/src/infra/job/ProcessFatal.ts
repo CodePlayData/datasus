@@ -16,7 +16,7 @@
     limitations under the License.
 */
 
-class ProcessFatal extends Error {
+export class ProcessFatal extends Error {
     constructor(pid: string, error?: Error) {
         super(`[ERROR]: Process ${ pid } closed with error: ${ error?.name }`)
         this.name = 'ProcessFatalException';

@@ -16,13 +16,14 @@
     limitations under the License.
 */
 
-import { DbcReader } from "../DbcReader.js";
+import { DbcReader } from "../dbc/DbcReader";
 import { appendFile, appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { JobMessage } from "./JobMessage.js";
 import { Criteria } from "../../interface/criteria/Criteria.js";
 import { Records } from "../../core/Records.js";
 import { JobSummary } from "./JobSummary.js";
+import { ProcessFatal } from "./ProcessFatal.js";
 
 class ProcessRecordFailed extends Error {
     constructor() {

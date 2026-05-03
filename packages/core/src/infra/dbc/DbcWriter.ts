@@ -1,3 +1,4 @@
+// @filename: DbcWriter.ts
 
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
@@ -21,16 +22,55 @@ import { parse } from "node:path";
 import { DBFFile, FieldDescriptor } from 'dbffile';
 import { dbf2dbc } from "@codeplaydata/dbc2dbf"
 
-export class DbcWriter {
-    private static instance: DbcWriter;
-    private static _initPromise: Promise<DbcWriter> | null = null;
+
+class DbcWriterInitializationError extends Error {
+    private constructor(cause: unknown) {
+        super(`An error occurred when initializing DbcWriter: ${(cause as Error)?.message || cause}`);
+        this.name = 'DbcWriterInitializationError';
+        this.cause = cause;
+    }
+
+    static async exception<T = void>(cause: unknown, fallbackFunction?: (error: DbcWriterInitializationError) => Promise<T>) {
+        const error = new DbcWriterInitializationError(cause);
+        if (fallbackFunction) {
+            await fallbackFunction(error);
+        } else {
+            throw error;
+        }
+    }
+}
+
+class DbcWriterFlushError<R = Record<string, unknown>> extends Error {
+    private constructor(public records: R[], cause: unknown) {
+        super(`An error occurred when flushing records in DbcWriter: ${(cause as Error)?.message || cause}`);
+        this.name = 'DbcWriterFlushError';
+        this.cause = cause;
+    }
+
+    static async exception<R = Record<string, unknown>, F = void>(records: R[], cause: unknown, fallbackFunction?: (error: DbcWriterFlushError<R>, records: R[]) => Promise<F>) {
+        const error = new DbcWriterFlushError<R>(records, cause);
+        if (fallbackFunction) {
+            await fallbackFunction(error, records);
+        } else {
+            throw error;
+        }
+    }
+}
+
+export class DbcWriter<T = Record<string, unknown>> {
+    private static instance: DbcWriter<any>;
+    private static _initPromise: Promise<DbcWriter<any>> | null = null;
 
     private dbf: DBFFile | undefined;
     private readonly io: { input: string, output: string };
-    private buffer: any[] = [];
+    private buffer: T[] = [];
     private fields: FieldDescriptor[] | undefined;
 
-    private constructor(outputPath: string) {
+    private constructor(
+        outputPath: string,
+        private readonly onErrorInit?: (error: DbcWriterInitializationError) => Promise<unknown>,
+        private readonly onErrorFlush?: (error: DbcWriterFlushError<T>, chunk: T[]) => Promise<unknown>
+    ) {
         const outputFilePath = parse(outputPath);
         this.io = {
             input: `${tmpdir()}/${outputFilePath.name}-${process.pid}-${Date.now()}.dbf`,
@@ -38,25 +78,30 @@ export class DbcWriter {
         }
     }
 
-    static async initialize(outputPath: string, fields: FieldDescriptor[]): Promise<DbcWriter> {
-        if (DbcWriter.instance) return DbcWriter.instance;
+    static async initialize<TRec = Record<string, unknown>, TFallbackInit = void, TFallbackFlush = void>(
+        outputPath: string,
+        fields: FieldDescriptor[],
+        onErrorInit?: (error: DbcWriterInitializationError) => Promise<TFallbackInit>,
+        onErrorFlush?: (error: DbcWriterFlushError<TRec>, chunk: TRec[]) => Promise<TFallbackFlush>
+    ): Promise<DbcWriter<TRec>> {
+        if (DbcWriter.instance) return DbcWriter.instance as DbcWriter<TRec>;
         if (!DbcWriter._initPromise) {
             DbcWriter._initPromise = (async () => {
                 if (!DbcWriter.instance) {
-                    DbcWriter.instance = new DbcWriter(outputPath);
+                    DbcWriter.instance = new DbcWriter<TRec>(outputPath, onErrorInit, onErrorFlush);
                     await DbcWriter.instance._init(fields);
                 }
                 return DbcWriter.instance;
             })();
         }
-        return DbcWriter._initPromise;
+        return DbcWriter._initPromise as Promise<DbcWriter<TRec>>;
     }
 
-    static getInstance(): DbcWriter {
+    static getInstance<TRec = Record<string, unknown>>(): DbcWriter<TRec> {
         if (!DbcWriter.instance) {
             throw new Error("DbcWriter not initialized. Call initialize first.");
         }
-        return DbcWriter.instance;
+        return DbcWriter.instance as DbcWriter<TRec>;
     }
 
     private async _init(fields: FieldDescriptor[]) {
@@ -68,23 +113,27 @@ export class DbcWriter {
                 unlinkSync(this.io.input);
             }
         } catch (e) {
-            // ignore error
+            await DbcWriterInitializationError.exception(e, this.onErrorInit);
         }
 
-        // @ts-ignore
-        this.dbf = await DBFFile.create(this.io.input, fields);
+        try {
+            // @ts-ignore
+            this.dbf = await DBFFile.create(this.io.input, fields);
 
-        if (this.buffer.length > 0) {
-            await this.dbf.appendRecords(this.buffer);
-            this.buffer = [];
+            if (this.buffer.length > 0) {
+                await this.dbf.appendRecords(this.buffer);
+                this.buffer = [];
+            }
+        } catch (e) {
+            await DbcWriterInitializationError.exception(e, this.onErrorInit);
         }
     }
 
-    private writeBuffer: any[] = [];
+    private writeBuffer: T[] = [];
     private readonly BATCH_SIZE = 2000;
     private isWriting = false;
 
-    async write(records: any[] | any) {
+    async write(records: T[] | T) {
         const recordsArray = Array.isArray(records) ? records : [records];
 
         if (!this.dbf) {
@@ -106,11 +155,9 @@ export class DbcWriter {
         const chunk = this.writeBuffer.splice(0, this.writeBuffer.length);
 
         try {
-            await this.dbf.appendRecords(chunk);
-        } catch (error) {
-            console.error("Error writing batch to DBF:", error);
-            // Put failed records back? For now, maybe just log. 
-            // Better to re-queue if critical, but keeping simple for now to solve EMFILE.
+            await this.dbf.appendRecords(chunk as Record<string, unknown>[]);
+        } catch (error: unknown) {
+            await DbcWriterFlushError.exception(chunk, error, this.onErrorFlush);
         } finally {
             this.isWriting = false;
             // If more arrived while writing, flush again

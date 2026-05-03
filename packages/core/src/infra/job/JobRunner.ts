@@ -105,8 +105,9 @@ export class JobRunner implements Command {
             child.on('exit', async (code, signal) => {
                 try {
                     await Promise.all(pendingPromises);
-                    if (signal) {
+                    if (code !== 0 || signal) {
                         reject(`Foi fechado pelo sinal: ${signal} com o código ${code}`)
+                        return;
                     }
                     resolve(true)
                 } catch (e) {
@@ -114,49 +115,54 @@ export class JobRunner implements Command {
                 }
             });
             child.on('message', (msg: any) => {
-                const isTypedEvent = msg && typeof msg === 'object' && 'type' in msg;
-                if (isTypedEvent) {
-                    if (msg.type === 'progress') {
-                        if (progressCallback) {
-                            const promise = progressCallback(msg);
-                            if (promise instanceof Promise) pendingPromises.push(promise);
-                        } else {
-                            const pid = msg.pid ?? 'unknown';
-                            const coloredPid = `\x1b[36m[child ${pid}]\x1b[0m`;
-                            const coloredFile = `\x1b[33m${msg.file}\x1b[0m`;
-                            if (msg.status === 'started') {
-                                activeJobs.set(pid, `${coloredPid} ${coloredFile}: \x1b[90mIniciando o processamento...\x1b[0m`);
-                                JobRunner.renderConsole();
-                            } else if (msg.status === 'running') {
-                                const processed = msg.processed ?? '?';
-                                const total = msg.total ?? '?';
-                                activeJobs.set(pid, `${coloredPid} ${coloredFile}: \x1b[32m${msg.pct}% (${processed}/${total})\x1b[0m`);
-                                JobRunner.renderConsole();
-                            } else if (msg.status === 'finished') {
-                                const summary = msg.summary;
-                                JobRunner.globalSummary.total += summary.total;
-                                JobRunner.globalSummary.founds += summary.founds;
-                                JobRunner.globalSummary.errors += summary.errors;
+                try {
+                    const isTypedEvent = msg && typeof msg === 'object' && 'type' in msg;
+                    if (isTypedEvent) {
+                        if (msg.type === 'progress') {
+                            if (progressCallback) {
+                                const promise = progressCallback(msg);
+                                if (promise instanceof Promise) pendingPromises.push(promise);
+                            } else {
+                                const pid = msg.pid ?? 'unknown';
+                                const coloredPid = `\x1b[36m[child ${pid}]\x1b[0m`;
+                                const coloredFile = `\x1b[33m${msg.file}\x1b[0m`;
+                                if (msg.status === 'started') {
+                                    activeJobs.set(pid, `${coloredPid} ${coloredFile}: \x1b[90mIniciando o processamento...\x1b[0m`);
+                                    JobRunner.renderConsole();
+                                } else if (msg.status === 'running') {
+                                    const processed = msg.processed ?? '?';
+                                    const total = msg.total ?? '?';
+                                    activeJobs.set(pid, `${coloredPid} ${coloredFile}: \x1b[32m${msg.pct}% (${processed}/${total})\x1b[0m`);
+                                    JobRunner.renderConsole();
+                                } else if (msg.status === 'finished') {
+                                    const summary = msg.summary;
+                                    JobRunner.globalSummary.total += summary.total;
+                                    JobRunner.globalSummary.founds += summary.founds;
+                                    JobRunner.globalSummary.errors += summary.errors;
 
-                                const fmt = (n: number) => n.toLocaleString('pt-BR');
-                                const text = `${coloredPid} ${coloredFile}: \x1b[32m100% (${summary.total}/${summary.total})\x1b[0m - O Processo ${pid} encerrou a leitura e o resumo dos jobs é de \x1b[1m\x1b[32m${fmt(summary.founds)} Registros Encontrados\x1b[0m, de um total de \x1b[36m${fmt(summary.total)}\x1b[0m Registros e com \x1b[31m${fmt(summary.errors)}\x1b[0m Registros Perdidos por Erro.`;
-                                activeJobs.delete(pid);
-                                JobRunner.finishedJobs++;
-                                JobRunner.renderConsole(text);
+                                    const fmt = (n: number) => n.toLocaleString('pt-BR');
+                                    const text = `${coloredPid} ${coloredFile}: \x1b[32m100% (${summary.total}/${summary.total})\x1b[0m - O Processo ${pid} encerrou a leitura e o resumo dos jobs é de \x1b[1m\x1b[32m${fmt(summary.founds)} Registros Encontrados\x1b[0m, de um total de \x1b[36m${fmt(summary.total)}\x1b[0m Registros e com \x1b[31m${fmt(summary.errors)}\x1b[0m Registros Perdidos por Erro.`;
+                                    activeJobs.delete(pid);
+                                    JobRunner.finishedJobs++;
+                                    JobRunner.renderConsole(text);
+                                }
+                            }
+                        } else if (msg.type === 'metadata') {
+                            if (callback) {
+                                const promise = callback(msg);
+                                if (promise instanceof Promise) pendingPromises.push(promise);
                             }
                         }
-                    } else if (msg.type === 'metadata') {
+                    } else {
+                        const parsedMsg = parser ? parser.parse(msg as unknown as Records) : msg;
                         if (callback) {
-                            const promise = callback(msg);
+                            const promise = callback(parsedMsg);
                             if (promise instanceof Promise) pendingPromises.push(promise);
                         }
                     }
-                } else {
-                    const parsedMsg = parser ? parser.parse(msg as unknown as Records) : msg;
-                    if (callback) {
-                        const promise = callback(parsedMsg);
-                        if (promise instanceof Promise) pendingPromises.push(promise);
-                    }
+                } catch (e) {
+                    reject(e);
+                    child.kill();
                 }
             });
             child.send(jobMsg);

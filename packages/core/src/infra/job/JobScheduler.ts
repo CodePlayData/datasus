@@ -26,13 +26,21 @@ import { Datasource } from "../../core/Datasource.js";
 
 class FailToScheduleJob extends Error {
     constructor() {
-        super(`The job could not be scheduled.`)
+        super(`The job could not be scheduled.`);
         this.name = 'FailToScheduleJob';
-        this.cause = 'Some problem occurred when scheduling the job.'
+        this.cause = 'Some problem occurred when scheduling the job.';
     }
 
-    static exception() {
-        throw new FailToScheduleJob()
+    static async exception<TChunk = string | JobMessage>(
+        fallback?: (error: Error, failedChunk?: TChunk[]) => Promise<void> | void,
+        failedChunk?: TChunk[]
+    ): Promise<void> {
+        const error = new FailToScheduleJob();
+        if (fallback) {
+            await fallback(error, failedChunk);
+        } else {
+            throw error;
+        }
     }
 }
 
@@ -51,18 +59,26 @@ export class JobScheduler<D extends Datasource> implements Command {
         return this.filesProcessed
     }
 
-    async exec(chunk: string[] | JobMessage[], jobScript: string, dataSource?: D, callback?: Function, parser?: Parser<Records>, progressCallback?: Function): Promise<void> {
+    async exec<TChunk extends string | JobMessage>(
+        chunk: TChunk[], 
+        jobScript: string, 
+        dataSource?: D, 
+        callback?: Function, 
+        parser?: Parser<Records>, 
+        progressCallback?: Function,
+        onError?: (error: Error, failedChunk?: TChunk[]) => Promise<void> | void
+    ): Promise<void> {
         try {
             const promises = chunk.map((item) => {
                 const jobMessage = this.createJobMessage(item, dataSource);
                 return JobRunner.init(jobScript).exec(jobMessage, callback, parser, progressCallback)
                     .then(() => {
                         this.incrementFilesProcessed();
-                    })
-            })
+                    });
+            });
             await Promise.all(promises);
         } catch (_) {
-            FailToScheduleJob.exception()
+            await FailToScheduleJob.exception<TChunk>(onError, chunk);
         }
     }
 

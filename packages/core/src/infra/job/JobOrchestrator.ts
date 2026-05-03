@@ -81,22 +81,24 @@ export class JobOrchestrator<
         return join(__dirname, 'job.js');
     }
 
-    async exec(callback?: Function, jobScript?: string) {
+    async exec(callback?: Function, jobScript?: string, verbose: boolean = true) {
         const scriptToUse = jobScript ?? this.defaultJobScript;
 
         for await (let file of this._files) {
-            console.log(`Downloading ${file}...`)
-            await this.gateway.get(file, join(this.resolvedDataPath, file))
-            console.log(`Download of ${file} completed.`)
+            if (verbose) console.log(`Downloading ${file}...`);
+            await this.gateway.get(file, join(this.resolvedDataPath, file));
+            if (verbose) console.log(`Download of ${file} completed.`);
         }
         let chunksProceeded = 0;
-        console.log(`\nSending Jobs.\n`);
+        if (verbose) console.log(`\nSending Jobs.\n`);
         JobRunner.totalJobs = this._files.length;
         JobRunner.finishedJobs = 0;
         JobRunner.startTime = Date.now();
         JobRunner.globalSummary = { total: 0, founds: 0, errors: 0 };
+        const progressCb = verbose ? undefined : () => {};
+
         while (chunksProceeded < this._chunks.length) {
-            await JobScheduler.init(this.MAX_CONCURRENT_PROCESSES, this.filters /* criteria, supposed to be query */, this.resolvedDataPath).exec(this._chunks[chunksProceeded], scriptToUse, this.dataSource, callback, this.parser).finally(() => {
+            await JobScheduler.init(this.MAX_CONCURRENT_PROCESSES, this.filters /* criteria, supposed to be query */, this.resolvedDataPath).exec(this._chunks[chunksProceeded], scriptToUse, this.dataSource, callback, this.parser, progressCb).finally(() => {
                 chunksProceeded = chunksProceeded + 1
             })
         }
@@ -104,7 +106,7 @@ export class JobOrchestrator<
             this._files = [];
             this._chunks = [];
         }
-        JobRunner.printGlobalSummary();
+        if (verbose) JobRunner.printGlobalSummary();
         return
     }
 }

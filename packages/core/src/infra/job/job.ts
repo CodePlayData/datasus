@@ -19,6 +19,7 @@
 
 import {JobProcessor} from "./JobProcessor.js";
 import {JobMessage} from "./JobMessage.js";
+import {ProcessFatal} from "./ProcessFatal.js";
 
 class UncaughtException extends Error {
     constructor(pid: string, error: Error) {
