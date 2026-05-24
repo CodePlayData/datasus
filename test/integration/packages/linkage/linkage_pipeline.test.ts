@@ -16,71 +16,262 @@
  *     limitations under the License.
  */
 
-import { describe, it } from 'node:test';
+import { describe, it, beforeEach } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { join } from 'node:path';
-import { existsSync } from 'node:fs';
 
-import { 
-    LinkageStrategy, 
-    InMemoryIndex, 
-    InMemoryMatchRepository, 
-    DbcRecordProvider 
+import {
+    LinkageStrategy,
+    InMemoryIndex,
+    InMemoryMatchRepository
 } from '../../../../packages/linkage/dist/index.js';
 
-const FIXTURE_PATH = join(process.cwd(), 'test', 'integration', 'packages', 'core', 'fixtures', 'PAAC1001.dbc');
+/**
+ * Lightweight in-memory record provider that returns controlled records.
+ * Implements the same interface as DbcRecordProvider (exec with callback).
+ */
+class MockRecordProvider {
+    constructor(private records: Record<string, string>[]) {}
 
-describe('Integração: Pipeline de Linkage (LinkageStrategy + DbcRecordProvider)', () => {
-    
-    it('deve cruzar um arquivo DBC contra ele mesmo e encontrar matches perfeitos', async () => {
-        assert.ok(existsSync(FIXTURE_PATH), `Fixture não encontrada em ${FIXTURE_PATH}`);
-
-        // Criar uma cópia da fixture para o target para evitar colisões de I/O
-        const TARGET_FIXTURE = FIXTURE_PATH.replace('.dbc', '_target.dbc');
-        const { copyFileSync, rmSync } = await import('node:fs');
-        copyFileSync(FIXTURE_PATH, TARGET_FIXTURE);
-
-        try {
-            // 1. Setup Infra em memória
-            const index = new InMemoryIndex();
-            const repository = new InMemoryMatchRepository();
-            
-            // 2. Setup Records Providers
-            const cohortProvider = new DbcRecordProvider(FIXTURE_PATH, false);
-            const targetProvider = new DbcRecordProvider(TARGET_FIXTURE, false);
-
-            // 3. Setup Strategy (Verbose para vermos o progresso)
-            const strategy = new LinkageStrategy('SelfLinkage', index, repository, false);
-
-            // Configuração da Coorte
-            strategy.cohort(cohortProvider, {
-                name: 'SIASUS_COHORT'
-            });
-
-            // Configuração do Linkage
-            // Refinamos a blocagem para incluir PA_UFMUN para ser mais rápido
-            strategy.link(targetProvider, {
-                name: 'SIASUS_TARGET',
-                type: 'probabilistic',
-                scoreStrategy: 'simple',
-                on: { PA_UFMUN: 'PA_UFMUN' },
-                blocking: { PA_CODUNI: 'PA_CODUNI', PA_SEXO: 'PA_SEXO', PA_UFMUN: 'PA_UFMUN' },
-                threshold: 0.9
-            });
-
-            // 4. Execução
-            await strategy.exec();
-
-            // 5. Validação
-            const matches = repository.all;
-            assert.ok(matches.length > 0, 'Deveria ter encontrado matches');
-            
-            const firstMatch = matches[0];
-            assert.strictEqual(firstMatch.cohort.PA_CODUNI, firstMatch.target.PA_CODUNI);
-            
-            console.log(`[Integration Test] Encontrados ${matches.length} matches.`);
-        } finally {
-            if (existsSync(TARGET_FIXTURE)) rmSync(TARGET_FIXTURE);
+    async exec(callback: (record: Record<string, string>) => Promise<void>): Promise<void> {
+        for (const record of this.records) {
+            await callback(record);
         }
+    }
+}
+
+describe('Integração: Pipeline de Linkage (LinkageStrategy)', () => {
+    let index: InMemoryIndex;
+    let repository: InMemoryMatchRepository;
+
+    beforeEach(() => {
+        index = new InMemoryIndex();
+        repository = new InMemoryMatchRepository();
+    });
+
+    it('deve encontrar matches perfeitos com linkage determinístico', async () => {
+        const cohort = new MockRecordProvider([
+            { ID: '1', UF: 'AC', SEXO: 'M', NOME: 'Joao' },
+            { ID: '2', UF: 'AC', SEXO: 'F', NOME: 'Maria' },
+            { ID: '3', UF: 'AM', SEXO: 'M', NOME: 'Pedro' },
+        ]);
+
+        const target = new MockRecordProvider([
+            { ID: '10', UF: 'AC', SEXO: 'M', NOME: 'Joao' },
+            { ID: '20', UF: 'AC', SEXO: 'F', NOME: 'Maria' },
+            { ID: '30', UF: 'RR', SEXO: 'M', NOME: 'Lucas' },
+        ]);
+
+        const strategy = new LinkageStrategy('DeterministicTest', index, repository, false);
+
+        strategy.cohort(cohort, { name: 'COHORT' });
+        strategy.link(target, {
+            name: 'TARGET',
+            type: 'deterministic',
+            on: { UF: 'UF', SEXO: 'SEXO' },
+            blocking: { UF: 'UF', SEXO: 'SEXO' },
+        });
+
+        await strategy.exec();
+
+        const matches = repository.all;
+        assert.strictEqual(matches.length, 2, 'Deve encontrar 2 matches (Joao AC/M e Maria AC/F)');
+
+        // Both matches should have matching UF and SEXO
+        for (const m of matches) {
+            assert.strictEqual(m.cohort.UF, m.target.UF);
+            assert.strictEqual(m.cohort.SEXO, m.target.SEXO);
+        }
+    });
+
+    it('deve aplicar threshold no scoring simples probabilístico', async () => {
+        const cohort = new MockRecordProvider([
+            { ID: '1', UF: 'AC', CIDADE: 'RioBranco', IDADE: '30' },
+            { ID: '2', UF: 'AM', CIDADE: 'Manaus', IDADE: '45' },
+        ]);
+
+        const target = new MockRecordProvider([
+            // Perfect match on all fields for cohort record 1
+            { ID: '10', UF: 'AC', CIDADE: 'RioBranco', IDADE: '30' },
+            // Partial match: only 1/3 fields match for cohort record 1 — score = 0.33, below 0.5 threshold
+            { ID: '20', UF: 'AC', CIDADE: 'Macapa', IDADE: '50' },
+            // Partial match: only 1/3 fields match for cohort record 2 — score = 0.33, below 0.5 threshold
+            { ID: '30', UF: 'AM', CIDADE: 'Belém', IDADE: '25' },
+        ]);
+
+        const strategy = new LinkageStrategy('ThresholdTest', index, repository, false);
+
+        strategy.cohort(cohort, { name: 'COHORT' });
+        strategy.link(target, {
+            name: 'TARGET',
+            type: 'probabilistic',
+            scoreStrategy: 'simple',
+            on: { UF: 'UF', CIDADE: 'CIDADE', IDADE: 'IDADE' },
+            blocking: { UF: 'UF' },
+            threshold: 0.5,
+        });
+
+        await strategy.exec();
+
+        const matches = repository.all;
+        assert.strictEqual(matches.length, 1, 'Apenas o match perfeito deve ultrapassar threshold 0.5');
+        assert.strictEqual(matches[0].cohort.ID, '1');
+        assert.strictEqual(matches[0].target.ID, '10');
+    });
+
+    it('deve aplicar pesos no scoring simples e filtrar por threshold', async () => {
+        const cohort = new MockRecordProvider([
+            { ID: '1', UF: 'AC', CIDADE: 'RioBranco', IDADE: '30' },
+        ]);
+
+        const target = new MockRecordProvider([
+            // UF matches (weight 3), CIDADE matches (weight 2), IDADE doesn't (weight 1)
+            // score = (3+2)/6 = 0.833
+            { ID: '10', UF: 'AC', CIDADE: 'RioBranco', IDADE: '99' },
+            // Only UF matches (weight 3)
+            // score = 3/6 = 0.5
+            { ID: '20', UF: 'AC', CIDADE: 'Macapa', IDADE: '50' },
+        ]);
+
+        const strategy = new LinkageStrategy('WeightedTest', index, repository, false);
+
+        strategy.cohort(cohort, { name: 'COHORT' });
+        strategy.link(target, {
+            name: 'TARGET',
+            type: 'probabilistic',
+            scoreStrategy: 'simple',
+            on: { UF: 'UF', CIDADE: 'CIDADE', IDADE: 'IDADE' },
+            blocking: { UF: 'UF' },
+            weights: { UF: 3, CIDADE: 2, IDADE: 1 },
+            threshold: 0.6,
+        });
+
+        await strategy.exec();
+
+        const matches = repository.all;
+        assert.strictEqual(matches.length, 1, 'Apenas o match com score 0.833 deve passar threshold 0.6');
+        assert.strictEqual(matches[0].target.ID, '10');
+    });
+
+    it('deve executar linkage com Fellegi-Sunter e logs m/u', async () => {
+        const cohort = new MockRecordProvider([
+            { ID: '1', UF: 'AC', SEXO: 'M' },
+            { ID: '2', UF: 'AM', SEXO: 'F' },
+        ]);
+
+        const target = new MockRecordProvider([
+            // Both fields match → score = log2(0.9/0.1) + log2(0.8/0.2) = 3.17 + 2 = 5.17
+            { ID: '10', UF: 'AC', SEXO: 'M' },
+            // UF matches, SEXO doesn't → score = log2(0.9/0.1) + log2(0.1/0.9) = 3.17 - 3.17 = 0
+            { ID: '20', UF: 'AC', SEXO: 'F' },
+            // UF matches, SEXO doesn't → score = 0, below threshold 1
+            { ID: '30', UF: 'AM', SEXO: 'M' },
+        ]);
+
+        const strategy = new LinkageStrategy('FellegiSunterTest', index, repository, false);
+
+        strategy.cohort(cohort, { name: 'COHORT' });
+        strategy.link(target, {
+            name: 'TARGET',
+            type: 'probabilistic',
+            scoreStrategy: 'fellegi-sunter',
+            on: { UF: 'UF', SEXO: 'SEXO' },
+            blocking: { UF: 'UF' },
+            weights: {
+                UF: { m: 0.9, u: 0.1 },
+                SEXO: { m: 0.8, u: 0.2 },
+            },
+            threshold: 1,
+        });
+
+        await strategy.exec();
+
+        const matches = repository.all;
+        assert.ok(matches.length >= 1, 'Deve encontrar pelo menos 1 match com FS');
+        assert.strictEqual(matches[0].cohort.ID, '1');
+        assert.strictEqual(matches[0].target.ID, '10');
+    });
+
+    it('deve executar linkage multi-step com dois targets', async () => {
+        const cohort = new MockRecordProvider([
+            { ID: '1', UF: 'AC', SEXO: 'M' },
+        ]);
+
+        const target1 = new MockRecordProvider([
+            { ID: 'T1_1', UF: 'AC', SEXO: 'M' },
+        ]);
+
+        const target2 = new MockRecordProvider([
+            { ID: 'T2_1', UF: 'AC', SEXO: 'M' },
+        ]);
+
+        const strategy = new LinkageStrategy('MultiStepTest', index, repository, false);
+
+        strategy.cohort(cohort, { name: 'COHORT' });
+        strategy.link(target1, {
+            name: 'TARGET1',
+            type: 'deterministic',
+            on: { UF: 'UF', SEXO: 'SEXO' },
+            blocking: { UF: 'UF', SEXO: 'SEXO' },
+        });
+        strategy.link(target2, {
+            name: 'TARGET2',
+            type: 'deterministic',
+            on: { UF: 'UF', SEXO: 'SEXO' },
+            blocking: { UF: 'UF', SEXO: 'SEXO' },
+        });
+
+        await strategy.exec();
+
+        const matches = repository.all;
+        assert.strictEqual(matches.length, 2, 'Deve encontrar 2 matches (um de cada target)');
+
+        const configs = matches.map(m => m.config.name);
+        assert.ok(configs.includes('TARGET1'), 'Deve ter match do TARGET1');
+        assert.ok(configs.includes('TARGET2'), 'Deve ter match do TARGET2');
+    });
+
+    it('deve lançar erro quando cohort não é definido', async () => {
+        const strategy = new LinkageStrategy('NoCohort', index, repository, false);
+
+        await assert.rejects(
+            strategy.exec(),
+            /Cohort not defined/i,
+            'Deve lançar erro ao chamar exec() sem cohort'
+        );
+    });
+
+    it('deve lançar erro quando não há linkage definido', async () => {
+        const strategy = new LinkageStrategy('NoLinkage', index, repository, false);
+        strategy.cohort(new MockRecordProvider([]), { name: 'COHORT' });
+
+        await assert.rejects(
+            strategy.exec(),
+            /No linkage defined/i,
+            'Deve lançar erro ao chamar exec() sem linkage'
+        );
+    });
+
+    it('deve não encontrar matches quando blocking keys não coincidem', async () => {
+        const cohort = new MockRecordProvider([
+            { ID: '1', UF: 'AC', SEXO: 'M' },
+        ]);
+
+        const target = new MockRecordProvider([
+            { ID: '10', UF: 'AM', SEXO: 'M' },
+        ]);
+
+        const strategy = new LinkageStrategy('NoMatchTest', index, repository, false);
+
+        strategy.cohort(cohort, { name: 'COHORT' });
+        strategy.link(target, {
+            name: 'TARGET',
+            type: 'deterministic',
+            on: { UF: 'UF' },
+            blocking: { UF: 'UF' },
+        });
+
+        await strategy.exec();
+
+        assert.strictEqual(repository.all.length, 0, 'Não deve encontrar matches quando blocking keys diferem');
     });
 });
