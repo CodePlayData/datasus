@@ -17,10 +17,9 @@
  */
 
 
-import { SIAParser } from "./SIAParser.js";
-import { Records } from "@codeplaydata/datasus-core";
+import { Parser, Records } from "@codeplaydata/datasus-core";
 
-export class SIABasicParser implements SIAParser {
+export class SIABasicParser implements Parser<Records> {
     record: Records | undefined
 
     private constructor(readonly dictionary: Map<string, (value: any) => any>) {

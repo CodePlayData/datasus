@@ -1,7 +1,7 @@
-// @filename: SIAParser.ts
+// @filename: InMemoryMatchRepository.ts
 
 /*
- *     Copyright 2025 Pedro Paulo Teixeira dos Santos
+ *     Copyright 2026 Pedro Paulo Teixeira dos Santos
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -16,11 +16,20 @@
  *     limitations under the License.
  */
 
-import { Parser, Records } from "@codeplaydata/datasus-core";
+import { MatchRepository } from "../interface/MatchRepository.js";
 
-/**
- * Interface representing a parser for the SIA (Sistema de Informações de Ambulatoriais).
- * @interface SIAParser
- * @extends Parser<Records>
- */
-export interface SIAParser extends Parser<Records> { }
+export class InMemoryMatchRepository implements MatchRepository {
+    private matches: any[] = [];
+
+    async save(match: any): Promise<void> {
+        this.matches.push(match);
+    }
+
+    get all(): any[] {
+        return this.matches;
+    }
+
+    clear(): void {
+        this.matches = [];
+    }
+}

@@ -16,10 +16,9 @@
  *     limitations under the License.
 */
 
-import { SIAParser } from "./SIAParser.js";
 import { JobOrchestrator } from "@codeplaydata/datasus-core";
 import {SIMDatasource} from "./SIMDatasource.js";
 import {SIMSubset} from "./SIMSubset.js";
 import {SIMGateway} from "./SIMGateway.js";
 
-export class SIMService extends JobOrchestrator<SIMSubset, SIMDatasource, SIMGateway, SIMParser> { }
+export class SIMService extends JobOrchestrator<SIMSubset, SIMDatasource, SIMGateway> { }

@@ -23,19 +23,15 @@ import { JobRunner } from "./JobRunner.js";
 import { Command } from "../Command.js";
 import { Subset } from "../../core/Subset.js";
 import { DATASUSGateway } from "../../interface/gateway/DATASUSGateway.js";
-import { Parser } from "../../interface/utils/Parser.js";
-import { Records } from "../../core/Records.js";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
-import { CriteriaObject } from "../../interface/criteria/CriteriaObject.js";
 import { Datasource } from "../../core/Datasource.js";
 import { JobConfig } from "./JobConfig.js";
 
 export class JobOrchestrator<
     S extends Subset,
     D extends Datasource,
-    G extends DATASUSGateway<S>,
-    P extends Parser<Records>
+    G extends DATASUSGateway<S>
 > implements Command {
     private _files: string[] = [];
     private _chunks: string[][] = [[]];
@@ -67,7 +63,7 @@ export class JobOrchestrator<
         return new JobOrchestrator(gateway, defaultConfig)
     }
 
-    async subset(subset: S, parser?: P) {
+    async subset(subset: S) {
         this._files = [];
         this._chunks = [[]];
         this.dataSource = undefined;
@@ -75,9 +71,6 @@ export class JobOrchestrator<
         this._files = await this.gateway.list(subset, 'short') as string[];
         this._files = Array.from(new Set(this._files));
         this._chunks = SplitIntoChunks.define(this.config.concurrency).exec(this._files) as string[][];
-        // Note: Se o usuário passar um parser aqui, ele sobrescreve o da config apenas para esta execução?
-        // No design atual, vamos usar o da config se disponível, ou o passado no subset.
-        // Mas a ideia do usuário é centralizar na config.
     }
 
     get defaultJobScript(): string {

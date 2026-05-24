@@ -20,6 +20,5 @@ import {JobOrchestrator} from "@codeplaydata/datasus-core";
 import {SINANSubset} from "./SINANSubset.js";
 import {SINANDatasource} from "./SINANDatasource.js";
 import {SINANGateway} from "./SINANGateway.js";
-import {SINANParser} from "./SINANParser.js";
 
-export class SINANService extends JobOrchestrator<SINANSubset, SINANDatasource, SINANGateway, SINANParser> { }
+export class SINANService extends JobOrchestrator<SINANSubset, SINANDatasource, SINANGateway> { }

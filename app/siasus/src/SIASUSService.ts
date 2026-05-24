@@ -19,8 +19,6 @@
 
 import { SIASubset } from "./SIASubset.js";
 import { SIADatasource } from "./SIADatasource.js";
-import { SIAGateway } from "./SIAGateway.js";
-import { SIAParser } from "./SIAParser.js";
-import { JobOrchestrator } from "@codeplaydata/datasus-core";
+import { DATASUSGateway, JobOrchestrator } from "@codeplaydata/datasus-core";
 
-export class SIASUSService extends JobOrchestrator<SIASubset, SIADatasource, SIAGateway, SIAParser> { }
+export class SIASUSService extends JobOrchestrator<SIASubset, SIADatasource, DATASUSGateway<SIASubset>> { }
