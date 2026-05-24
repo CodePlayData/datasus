@@ -159,4 +159,78 @@ describe('Saída (JobRunner IPC + Parser + DbcWriter + DbcReader roundtrip)', ()
             `Registros lidos de volta (${readBackCount}) devem ser iguais aos escritos (${receivedCount})`
         );
     });
+
+    it('deve fazer batch flush de registros quando o buffer atinge 2000', async () => {
+        const OUTPUT_FIELDS = [
+            { name: 'PA_CODUNI', type: 'C' as const, size: 7 },
+            { name: 'PA_SEXO', type: 'C' as const, size: 1 },
+            { name: 'PA_UFMUN', type: 'C' as const, size: 6 },
+        ];
+
+        const FLUSH_OUT_FILE = join(tmpdir(), `flush_integration_${Date.now()}.dbc`);
+
+        const flushWriter = await DbcWriter.initialize(FLUSH_OUT_FILE, OUTPUT_FIELDS);
+
+        const flushParser = {
+            dictionary: new Map<string, (value: any) => any>(),
+            parse(record: any) {
+                return {
+                    PA_CODUNI: record.PA_CODUNI,
+                    PA_SEXO: record.PA_SEXO,
+                    PA_UFMUN: record.PA_UFMUN,
+                };
+            }
+        };
+
+        const flushRunner = JobRunner.init(JOB_SCRIPT);
+        let flushCount = 0;
+
+        await flushRunner.exec(
+            {
+                file: 'PAAC1001.dbc',
+                dataPath: FIXTURE_DIR,
+                src: undefined,
+                criteria: [
+                    { type: 'string', prop: 'PA_SEXO', value: 'F' }
+                ]
+            },
+            async (msg: any) => {
+                if (msg && msg.type === 'metadata') return;
+
+                const parsed = flushParser.parse(msg);
+                await flushWriter.write(parsed);
+                flushCount++;
+            },
+            undefined,
+            () => {}
+        );
+
+        assert.ok(flushCount >= 2000, `Deve ter recebido pelo menos 2000 registros para testar batch flush (recebidos: ${flushCount})`);
+
+        await flushWriter.close();
+        assert.ok(existsSync(FLUSH_OUT_FILE), 'Arquivo .dbc de saída do batch flush deve existir');
+
+        const flushReader = await DbcReader.load(FLUSH_OUT_FILE);
+
+        let flushReadBackCount = 0;
+        await flushReader.forEachRecords(async (record: any) => {
+            flushReadBackCount++;
+            assert.ok('PA_CODUNI' in record, 'Registro deve ter PA_CODUNI');
+            assert.strictEqual(record.PA_SEXO, 'F', 'Todos os registros devem ser femininos');
+        });
+
+        flushReader.remove(false);
+
+        assert.strictEqual(
+            flushReadBackCount,
+            flushCount,
+            `Registros lidos de volta (${flushReadBackCount}) devem ser iguais aos escritos (${flushCount})`
+        );
+
+        // Cleanup
+        for (const ext of ['.dbc', '.dbf']) {
+            const f = FLUSH_OUT_FILE.replace('.dbc', ext);
+            if (existsSync(f)) unlinkSync(f);
+        }
+    });
 });

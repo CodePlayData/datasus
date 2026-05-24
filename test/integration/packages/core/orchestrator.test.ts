@@ -23,9 +23,15 @@
 //   2. Expõe os files e chunks processados para inspeção.
 //   3. Respeita MAX_CONCURRENT_PROCESSES na divisão dos lotes.
 
-import { describe, it } from 'node:test';
+import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import { strict as assert } from 'node:assert';
+import { join } from 'node:path';
 import { JobOrchestrator } from '../../../../packages/core/src/infra/job/JobOrchestrator.js';
+import { JobRunner } from '../../../../packages/core/src/infra/job/JobRunner.js';
+
+// @ts-ignore
+const __dirname = import.meta.dirname;
+const DUMMY_JOB = join(__dirname, '..', '..', '..', 'unit', 'packages', 'core', 'dummyJob.ts');
 
 // Mock do gateway que simula uma listagem FTP com duplicatas
 const mockGateway = {
@@ -48,6 +54,16 @@ const mockGateway = {
 };
 
 describe('Orquestração (JobOrchestrator + SplitIntoChunks)', () => {
+    beforeEach(() => {
+        JobRunner.totalJobs = 0;
+        JobRunner.finishedJobs = 0;
+        JobRunner.startTime = Date.now();
+        JobRunner.globalSummary = { total: 0, founds: 0, errors: 0 };
+    });
+
+    afterEach(() => {
+        mock.restoreAll();
+    });
 
     it('deve listar, deduplicar e fatiar em chunks de tamanho MAX_CONCURRENT_PROCESSES', async () => {
         const orchestrator = JobOrchestrator.init(mockGateway as any, { concurrency: 3 });
@@ -131,6 +147,44 @@ describe('Orquestração (JobOrchestrator + SplitIntoChunks)', () => {
         // Podemos indiretamente verificar pois ele expõe files e chunks
         assert.strictEqual(orchestrator.files.length, 10);
         assert.strictEqual(orchestrator.chunks.length, 5); // 10 files / 2 = 5 chunks
+    });
+
+    it('deve baixar arquivos e agendar jobs via exec()', async () => {
+        const downloads: string[] = [];
+        const execGateway = {
+            list: async () => ['test1.dbc', 'test1.dbc', 'test2.dbc'],
+            get: async (file: string, dest: string) => { downloads.push(file); }
+        };
+
+        const orchestrator = JobOrchestrator.init(execGateway as any, {
+            concurrency: 2,
+            verbose: false,
+            dataPath: '/tmp/test-data'
+        });
+
+        await orchestrator.subset({ src: 'TEST' } as any);
+
+        // Deduplica: 3 entradas -> 2 únicas
+        assert.strictEqual(orchestrator.files.length, 2);
+
+        const callbackMessages: any[] = [];
+
+        await orchestrator.exec(
+            (msg: any) => { callbackMessages.push(msg); },
+            DUMMY_JOB
+        );
+
+        // gateway.get() chamado para cada arquivo único (2 downloads)
+        assert.strictEqual(downloads.length, 2);
+        assert.strictEqual(downloads[0], 'test1.dbc');
+        assert.strictEqual(downloads[1], 'test2.dbc');
+
+        // Jobs processados: test1.dbc emite metadata, test2.dbc emite registro
+        assert.ok(callbackMessages.length >= 1, 'Deve ter recebido mensagens dos jobs');
+
+        // Após exec, files e chunks são limpos
+        assert.strictEqual(orchestrator.files.length, 0);
+        assert.strictEqual(orchestrator.chunks.length, 0);
     });
 });
 
