@@ -18,14 +18,14 @@
 
 import { describe, it, mock } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { MongoIndex } from '../../../../packages/linkage/src/infra/MongoIndex.js';
+import { TmpMongoIndex } from '../../../../app/shared/tmdb/TmpMongoIndex.js';
 
-describe('MongoIndex', () => {
+describe('TmpMongoIndex', () => {
     it('deve inserir um documento via set()', async () => {
         const mockCollection = {
             insertOne: mock.fn(async () => ({}))
         };
-        const index = new MongoIndex(mockCollection as any);
+        const index = new TmpMongoIndex(mockCollection as any);
         
         await index.set('k1', { val: 1 });
         
@@ -40,7 +40,7 @@ describe('MongoIndex', () => {
                 toArray: async () => [{ key: 'k1', value: { a: 1 } }, { key: 'k1', value: { a: 2 } }]
             }))
         };
-        const index = new MongoIndex(mockCollection as any);
+        const index = new TmpMongoIndex(mockCollection as any);
         
         const results = await index.get('k1');
         
@@ -52,10 +52,10 @@ describe('MongoIndex', () => {
     });
 
     it('deve verificar existência via has() usando countDocuments', async () => {
-        const mockCollection = {
-            countDocuments: mock.fn(async () => 1)
+       const mockCollection = {
+            countDocuments: mock.fn(async () => 5)
         };
-        const index = new MongoIndex(mockCollection as any);
+        const index = new TmpMongoIndex(mockCollection as any);
         
         const exists = await index.has('k1');
         

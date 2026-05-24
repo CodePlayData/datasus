@@ -18,14 +18,14 @@
 
 import { describe, it, mock } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { MongoMatchRepository } from '../../../../packages/linkage/src/infra/MongoMatchRepository.js';
+import { TmpMongoMatchRepository } from '../../../../app/shared/tmdb/TmpMongoMatchRepository.js';
 
-describe('MongoMatchRepository', () => {
+describe('TmpMongoMatchRepository', () => {
     it('deve salvar um match na coleção do MongoDB', async () => {
         const mockCollection = {
             insertOne: mock.fn(async () => ({}))
         };
-        const repo = new MongoMatchRepository(mockCollection as any);
+        const repo = new TmpMongoMatchRepository(mockCollection as any);
         const match = { cohort: { id: 1 }, target: { id: 2 }, score: 1.0 };
         
         await repo.save(match);

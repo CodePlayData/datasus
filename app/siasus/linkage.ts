@@ -17,7 +17,9 @@
 */
 
 import { MongoClient } from "mongodb";
-import { MongoIndex, LinkageStrategy, MongoMatchRepository } from "@codeplaydata/datasus-linkage";
+import { LinkageStrategy } from "@codeplaydata/datasus-linkage";
+import { TmpMongoIndex } from "../shared/tmdb/TmpMongoIndex.js";
+import { TmpMongoMatchRepository } from "../shared/tmdb/TmpMongoMatchRepository.js";
 import { parser, sia, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
@@ -32,8 +34,8 @@ const db = mongoClient.db(DB_NAME);
 const indexCollection = db.collection(INDEX_COLLECTION);
 const matchesCollection = db.collection(MATCHES_COLLECTION);
 
-const indexStrategy = new MongoIndex(indexCollection);
-const matchRepository = new MongoMatchRepository(matchesCollection);
+const indexStrategy = new TmpMongoIndex(indexCollection);
+const matchRepository = new TmpMongoMatchRepository(matchesCollection);
 
 const strategy = new LinkageStrategy("Test study", indexStrategy, matchRepository);
 

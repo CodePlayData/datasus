@@ -1,4 +1,4 @@
-// @filename: MongoMatchRepository.ts
+// @filename: TmpMongoIndex.ts
 
 /*
  *     Copyright 2025 Pedro Paulo Teixeira dos Santos
@@ -17,12 +17,22 @@
  */
 
 import { Collection } from "mongodb";
-import { MatchRepository } from "../interface/MatchRepository.js";
+import { IndexStrategy } from "@codeplaydata/datasus-linkage";
 
-export class MongoMatchRepository implements MatchRepository {
+export class TmpMongoIndex implements IndexStrategy {
     constructor(private readonly collection: Collection) { }
 
-    async save(match: any): Promise<void> {
-        await this.collection.insertOne(match);
+    async set(key: string, value: any): Promise<void> {
+        await this.collection.insertOne({ key, value });
+    }
+
+    async get(key: string): Promise<any[]> {
+        const results = await this.collection.find({ key }).toArray();
+        return results.map(doc => doc.value);
+    }
+
+    async has(key: string): Promise<boolean> {
+        const count = await this.collection.countDocuments({ key }, { limit: 1 });
+        return count > 0;
     }
 }
