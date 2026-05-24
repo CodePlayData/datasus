@@ -124,6 +124,11 @@ export class LinkageStrategy implements Pipeline {
 
     private match(cohortRecord: Records, targetRecord: Records, config: LinkageConfig): boolean {
         if (config.type === 'deterministic') {
+            for (const [cohortField, targetField] of Object.entries(config.on)) {
+                if (cohortRecord[cohortField] !== targetRecord[targetField]) {
+                    return false;
+                }
+            }
             return true;
         }
 

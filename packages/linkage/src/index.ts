@@ -7,3 +7,4 @@ export * from './WeightConfig.js';
 export * from './infra/InMemoryIndex.js';
 export * from './infra/InMemoryMatchRepository.js';
 export * from './infra/DbcRecordProvider.js';
+export * from './infra/SortMergeIndex.js';
