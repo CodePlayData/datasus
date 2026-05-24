@@ -16,7 +16,7 @@
     limitations under the License.
 */
 
-import { DbcReader } from "../dbc/DbcReader";
+import { DbcReader } from "../dbc/DbcReader.js";
 import { appendFile, appendFileSync } from "node:fs";
 import { join } from "node:path";
 import { JobMessage } from "./JobMessage.js";

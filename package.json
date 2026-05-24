@@ -7,18 +7,24 @@
     "packages/*"
   ],
   "scripts": {
+
     "build": "tsc -b",
     "build:core": "npm run build -w @codeplaydata/datasus-core",
     "build:linkage": "npm run build -w @codeplaydata/datasus-linkage",
     "build:app": "tsc -b --force tsconfig.app.json",
-    "publish": "npm publish --workspaces --access=public",
+
     "siasus:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/siasus/main.js",
-    "sinan:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sinan/main.js",
     "siasus:linkage": "npm run build:app && node --max-old-space-size=4096 ./dist/app/siasus/linkage.js",
+    "sinan:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sinan/main.js",
+
     "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:unit": "npx tsx --test test/unit/**/*.test.ts",
     "test:integration": "npx tsx --test test/integration/**/*.test.ts",
-    "test:e2e": "npx tsx --test-timeout 120000 --test test/e2e/**/*.test.ts"
+    "test:e2e": "npx tsx --test-timeout 120000 --test test/e2e/**/*.test.ts",
+
+    "publish": "npm publish --workspaces --access=public",
+    "publish:core": "npm publish -w @codeplaydata/datasus-core --access=public",
+    "publish:linkage": "npm publish -w @codeplaydata/datasus-linkage --access=public"
   },
   "keywords": [
     "DATASUS",

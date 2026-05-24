@@ -26,7 +26,10 @@ import {SINANBasicParser} from "./src/SINANBasicParser.js";
 const MAX_CONCURRENT_PROCESSES = 4;
 const FTP_HOST = 'ftp.datasus.gov.br';
 const ftpClient = await BasicFTPClient.connect(FTP_HOST);
-const gateway = await SINANFTPGateway.getInstanceOf(ftpClient!);
+if (!(ftpClient instanceof BasicFTPClient)) {
+    throw new Error('FTP connection failed');
+}
+const gateway = await SINANFTPGateway.getInstanceOf(ftpClient);
 
 export const MockedDictionary = new Map<string, (value: any) => any>([
     ['', (value: string) => undefined]
@@ -34,4 +37,8 @@ export const MockedDictionary = new Map<string, (value: any) => any>([
 
 export const subset: SINANSubset = { src: 'TUBE', year: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024] };
 export const parser: SINANParser = SINANBasicParser.instanceOf(MockedDictionary);
-export const sinan = SINANService.init(gateway, undefined, MAX_CONCURRENT_PROCESSES, "E:/DatasusFiles/")
+export const sinan = SINANService.init(gateway, {
+    concurrency: MAX_CONCURRENT_PROCESSES,
+    dataPath: "E:/DatasusFiles/",
+    parser: parser
+});

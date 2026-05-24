@@ -23,14 +23,18 @@ import { SIAFTPGateway } from "./src/SIAFTPGateway.js";
 import { SIABasicParser } from "./src/SIABasicParser.js";
 import { CBO } from "./utils/CBO.js";
 import { SIASubset } from "./src/SIASubset.js";
+import { SIGTAP } from "./utils/SIGTAP.js";
 
-const MAX_CONCURRENT_PROCESSES = 4;
+const MAX_CONCURRENT_PROCESSES = 6;
 const FTP_HOST = 'ftp.datasus.gov.br';
-const ftpClient = await BasicFTPClient.connect(FTP_HOST);
-const gateway = await SIAFTPGateway.getInstanceOf(ftpClient!);
+const ftpClient = await BasicFTPClient.connect(FTP_HOST)
+if (!(ftpClient instanceof BasicFTPClient)) {
+    throw new Error('FTP connection failed');
+}
+const gateway = await SIAFTPGateway.getInstanceOf(ftpClient!)
 const criteria = Criteria.set([
-    //new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF'),
-    new ArrayCriteria<BPAIRecord>(["2270196"], "CODUNI")
+    new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF'),
+    //new ArrayCriteria<BPAIRecord>(Object.values(SIGTAP), "PROC_ID")
 ]);
 
 export const BIDictionary = new Map<string, (value: any) => any>([
@@ -42,15 +46,20 @@ export const subset: SIASubset = {
     states: ['RJ'],
     period: {
         start: {
-            year: 2025,
+            year: 2008,
             month: '01'
         },
         end: {
-            year: 2025,
-            month: '01'
+            year: 2026,
+            month: '03'
         }
     }
 }
 
 export const parser = SIABasicParser.instanceOf(BIDictionary);
-export const sia = SIASUSService.init(gateway, criteria.toDTO(), MAX_CONCURRENT_PROCESSES, "E:/DatasusFiles/");
+export const sia = SIASUSService.init(gateway, {
+    filters: criteria.toDTO(),
+    concurrency: MAX_CONCURRENT_PROCESSES,
+    dataPath: "E:/DatasusFiles/",
+    parser: parser
+});

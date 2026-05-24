@@ -5,5 +5,7 @@ export * from './core/LinkageStrategy';
 export * from './interface/MatchRepository';
 export * from './WeightConfig.js';
 export * from './infra/InMemoryIndex.js';
+export * from './infra/InMemoryMatchRepository.js';
 export * from './infra/MongoIndex.js';
 export * from './infra/MongoMatchRepository.js';
+export * from './infra/DbcRecordProvider.js';

@@ -50,7 +50,7 @@ const mockGateway = {
 describe('Orquestração (JobOrchestrator + SplitIntoChunks)', () => {
 
     it('deve listar, deduplicar e fatiar em chunks de tamanho MAX_CONCURRENT_PROCESSES', async () => {
-        const orchestrator = JobOrchestrator.init(mockGateway as any, [], 3);
+        const orchestrator = JobOrchestrator.init(mockGateway as any, { concurrency: 3 });
 
         await orchestrator.subset({ src: 'PA' } as any);
 
@@ -67,7 +67,7 @@ describe('Orquestração (JobOrchestrator + SplitIntoChunks)', () => {
     });
 
     it('deve gerar um único chunk quando MAX_CONCURRENT_PROCESSES >= número de arquivos', async () => {
-        const orchestrator = JobOrchestrator.init(mockGateway as any, [], 20);
+        const orchestrator = JobOrchestrator.init(mockGateway as any, { concurrency: 20 });
 
         await orchestrator.subset({ src: 'PA' } as any);
 
@@ -77,7 +77,7 @@ describe('Orquestração (JobOrchestrator + SplitIntoChunks)', () => {
     });
 
     it('deve gerar chunks individuais quando MAX_CONCURRENT_PROCESSES = 1', async () => {
-        const orchestrator = JobOrchestrator.init(mockGateway as any, [], 1);
+        const orchestrator = JobOrchestrator.init(mockGateway as any, { concurrency: 1 });
 
         await orchestrator.subset({ src: 'PA' } as any);
 
@@ -87,7 +87,7 @@ describe('Orquestração (JobOrchestrator + SplitIntoChunks)', () => {
     });
 
     it('deve resetar estado ao chamar subset() novamente', async () => {
-        const orchestrator = JobOrchestrator.init(mockGateway as any, [], 5);
+        const orchestrator = JobOrchestrator.init(mockGateway as any, { concurrency: 5 });
 
         await orchestrator.subset({ src: 'PA' } as any);
         assert.strictEqual(orchestrator.files.length, 10);
@@ -98,7 +98,7 @@ describe('Orquestração (JobOrchestrator + SplitIntoChunks)', () => {
             get: async () => {}
         };
 
-        const orchestrator2 = JobOrchestrator.init(smallGateway as any, [], 5);
+        const orchestrator2 = JobOrchestrator.init(smallGateway as any, { concurrency: 5 });
         await orchestrator2.subset({ src: 'BI' } as any);
 
         assert.strictEqual(orchestrator2.files.length, 2);
@@ -107,7 +107,7 @@ describe('Orquestração (JobOrchestrator + SplitIntoChunks)', () => {
     });
 
     it('deve preservar a ordem dos arquivos dentro de cada chunk', async () => {
-        const orchestrator = JobOrchestrator.init(mockGateway as any, [], 3);
+        const orchestrator = JobOrchestrator.init(mockGateway as any, { concurrency: 3 });
 
         await orchestrator.subset({ src: 'PA' } as any);
 
@@ -123,7 +123,7 @@ describe('Orquestração (JobOrchestrator + SplitIntoChunks)', () => {
     });
 
     it('deve extrair o datasource do subset.src', async () => {
-        const orchestrator = JobOrchestrator.init(mockGateway as any, [], 2);
+        const orchestrator = JobOrchestrator.init(mockGateway as any, { concurrency: 2 });
 
         await orchestrator.subset({ src: 'PA' } as any);
 

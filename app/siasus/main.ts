@@ -17,18 +17,18 @@
 */
 
 import { MongoClient } from "mongodb";
-import { sia, parser, subset } from "./service.js";
+import { sia, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
-const DB_NAME = 'siasus';
-const COLLECTION_NAME = 'sanatorio_amb';
+const DB_NAME = 'siasus_oral_health';
+const COLLECTION_NAME = 'full_data';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
 const db = mongoClient.db(DB_NAME);
 const collection = db.collection(COLLECTION_NAME);
 
-await sia.subset(subset, parser)
+await sia.subset(subset)
 await sia.exec(
     async (message: any) => {
         if (message.type === 'metadata') {} else {

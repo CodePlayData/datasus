@@ -49,7 +49,7 @@ describe('Processamento (JobScheduler + JobRunner)', () => {
     });
 
     it('deve agendar um chunk de jobs e processar todos em paralelo', async () => {
-        const scheduler = JobScheduler.init(3);
+        const scheduler = JobScheduler.init({ concurrency: 3, dataPath: './', verbose: false });
         const chunk = ['test1.dbc', 'test1.dbc', 'test1.dbc'];
 
         const progressMessages: any[] = [];
@@ -77,11 +77,12 @@ describe('Processamento (JobScheduler + JobRunner)', () => {
     });
 
     it('deve construir a JobMessage com src, criteria e dataPath corretamente', async () => {
-        const scheduler = JobScheduler.init(
-            1,
-            [{ type: 'string', prop: 'PA_SEXO', value: 'F' }], // criteria
-            '/tmp/data' // DATA_PATH
-        );
+        const scheduler = JobScheduler.init({
+            concurrency: 1,
+            filters: [{ type: 'string', prop: 'PA_SEXO', value: 'F' }], // criteria
+            dataPath: '/tmp/data', // DATA_PATH
+            verbose: false
+        });
 
         // Vamos verificar o jobMessage indiretamente: o dummyJob test1.dbc não usa criteria/dataPath,
         // então o worker vai rodar normalmente — o que importa é que a mensagem chegou.
@@ -102,7 +103,7 @@ describe('Processamento (JobScheduler + JobRunner)', () => {
     });
 
     it('deve incrementar filesProcessed sequencialmente após cada job completar', async () => {
-        const scheduler = JobScheduler.init(2);
+        const scheduler = JobScheduler.init({ concurrency: 2, dataPath: './', verbose: false });
 
         // Primeiro chunk
         await scheduler.exec(
@@ -128,7 +129,7 @@ describe('Processamento (JobScheduler + JobRunner)', () => {
     });
 
     it('deve aplicar parser nos registros quando fornecido', async () => {
-        const scheduler = JobScheduler.init(1);
+        const scheduler = JobScheduler.init({ concurrency: 1, dataPath: './', verbose: false });
         const parsedRecords: any[] = [];
 
         const dummyParser = {
@@ -150,8 +151,31 @@ describe('Processamento (JobScheduler + JobRunner)', () => {
         assert.strictEqual(parsedRecords[0].parsed, true);
     });
 
+    it('deve aplicar o parser definido diretamente na JobConfig', async () => {
+        const dummyParser = {
+            parse: (record: any) => ({ ...record, fromConfig: true })
+        };
+        const scheduler = JobScheduler.init({ 
+            concurrency: 1, 
+            dataPath: './', 
+            verbose: false,
+            parser: dummyParser as any
+        });
+        const parsedRecords: any[] = [];
+
+        await scheduler.exec(
+            ['test2.dbc'], 
+            DUMMY_JOB,
+            undefined,
+            (msg: any) => { parsedRecords.push(msg); }
+            // Note: Não passamos parser aqui no exec()
+        );
+
+        assert.strictEqual(parsedRecords[0].fromConfig, true, 'O parser deveria ter vindo da config');
+    });
+
     it('deve tratar erro de um worker via onError callback', async () => {
-        const scheduler = JobScheduler.init(1);
+        const scheduler = JobScheduler.init({ concurrency: 1, dataPath: './', verbose: false });
         let capturedError: Error | undefined;
         let capturedChunk: string[] | undefined;
 

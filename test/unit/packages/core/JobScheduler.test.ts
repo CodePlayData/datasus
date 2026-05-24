@@ -27,7 +27,7 @@ describe('JobScheduler', () => {
     });
 
     it('deve agendar jobs e incrementar arquivos processados com sucesso', async () => {
-        const scheduler = JobScheduler.init(2);
+        const scheduler = JobScheduler.init({ concurrency: 2, dataPath: './', verbose: false });
         
         // Mock JobRunner.exec para simular sucesso
         const execSpy = mock.method(JobRunner.prototype, 'exec', async () => {
@@ -44,7 +44,7 @@ describe('JobScheduler', () => {
 
     describe('FailToScheduleJob', () => {
         it('deve chamar o fallback onError quando o agendamento falha', async () => {
-            const scheduler = JobScheduler.init(2);
+            const scheduler = JobScheduler.init({ concurrency: 2, dataPath: './', verbose: false });
             
             // Força falha no JobRunner
             mock.method(JobRunner.prototype, 'exec', async () => {
@@ -73,7 +73,7 @@ describe('JobScheduler', () => {
         });
 
         it('deve lançar FailToScheduleJob quando nenhum fallback é fornecido', async () => {
-            const scheduler = JobScheduler.init(2);
+            const scheduler = JobScheduler.init({ concurrency: 2, dataPath: './', verbose: false });
             
             mock.method(JobRunner.prototype, 'exec', async () => {
                 throw new Error('Fork failed');

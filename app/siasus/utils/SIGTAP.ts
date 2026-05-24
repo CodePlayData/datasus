@@ -1,4 +1,4 @@
-// @filename: service.ts
+// @filename: SIGTAP.ts
 
 /*
  *     Copyright 2026 Pedro Paulo Teixeira dos Santos
@@ -16,18 +16,7 @@
  *     limitations under the License.
 */
 
-import {BasicFTPClient} from "@codeplaydata/datasus-core";
-import {SIHSUSFTPGateway} from "./src/SIHSUSFTPGateway.js";
-
-const MAX_CONCURRENT_PROCESSES = 4;
-const FTP_HOST = 'ftp.datasus.gov.br';
-const ftpClient = await BasicFTPClient.connect(FTP_HOST);
-if (!(ftpClient instanceof BasicFTPClient)) {
-    throw new Error('FTP connection failed');
+export enum SIGTAP {
+    'exodontia_de_dente_permanente' = '0414020138',
+    'exodontia_multipla_com_alveoloplastia_com_sextante' = '0414020146'
 }
-const gateway = await SIHSUSFTPGateway.getInstanceOf(ftpClient);
-
-export const MockedDictionary = new Map<string, (value: any) => any>([
-    ['', (value: string) => undefined]
-]);
-

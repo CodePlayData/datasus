@@ -27,8 +27,9 @@ import { Parser } from "../../interface/utils/Parser.js";
 import { Records } from "../../core/Records.js";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
-import { CriteriaObject } from "../../interface/criteria/CriteriaObject";
+import { CriteriaObject } from "../../interface/criteria/CriteriaObject.js";
 import { Datasource } from "../../core/Datasource.js";
+import { JobConfig } from "./JobConfig.js";
 
 export class JobOrchestrator<
     S extends Subset,
@@ -39,7 +40,6 @@ export class JobOrchestrator<
     private _files: string[] = [];
     private _chunks: string[][] = [[]];
     private dataSource: D | undefined;
-    private parser: P | undefined;
     private readonly resolvedDataPath: string;
 
     get files() {
@@ -52,27 +52,32 @@ export class JobOrchestrator<
 
     protected constructor(
         private gateway: G,
-        readonly DATA_PATH: string = './',
-        readonly MAX_CONCURRENT_PROCESSES: number,
-        readonly filters?: CriteriaObject[]
+        readonly config: JobConfig
     ) {
-        this.resolvedDataPath = resolve(DATA_PATH);
+        this.resolvedDataPath = resolve(config.dataPath);
     }
 
-    static init(gateway: DATASUSGateway<Subset>, filters?: CriteriaObject[], MAX_CONCURRENT_PROCESSES: number = 5, DATA_PATH: string = './') {
-        return new JobOrchestrator(gateway, DATA_PATH, MAX_CONCURRENT_PROCESSES, filters)
+    static init(gateway: DATASUSGateway<Subset>, config?: Partial<JobConfig>) {
+        const defaultConfig: JobConfig = {
+            dataPath: './',
+            concurrency: 2,
+            verbose: true,
+            ...config
+        };
+        return new JobOrchestrator(gateway, defaultConfig)
     }
 
     async subset(subset: S, parser?: P) {
         this._files = [];
         this._chunks = [[]];
         this.dataSource = undefined;
-        this.parser = undefined;
         this.dataSource = subset.src;
         this._files = await this.gateway.list(subset, 'short') as string[];
         this._files = Array.from(new Set(this._files));
-        this._chunks = SplitIntoChunks.define(this.MAX_CONCURRENT_PROCESSES).exec(this._files) as string[][];
-        this.parser = parser;
+        this._chunks = SplitIntoChunks.define(this.config.concurrency).exec(this._files) as string[][];
+        // Note: Se o usuário passar um parser aqui, ele sobrescreve o da config apenas para esta execução?
+        // No design atual, vamos usar o da config se disponível, ou o passado no subset.
+        // Mas a ideia do usuário é centralizar na config.
     }
 
     get defaultJobScript(): string {
@@ -81,8 +86,9 @@ export class JobOrchestrator<
         return join(__dirname, 'job.js');
     }
 
-    async exec(callback?: Function, jobScript?: string, verbose: boolean = true) {
-        const scriptToUse = jobScript ?? this.defaultJobScript;
+    async exec(callback?: Function, jobScript?: string) {
+        const scriptToUse = jobScript ?? this.config.jobScript ?? this.defaultJobScript;
+        const verbose = this.config.verbose;
 
         for await (let file of this._files) {
             if (verbose) console.log(`Downloading ${file}...`);
@@ -91,14 +97,24 @@ export class JobOrchestrator<
         }
         let chunksProceeded = 0;
         if (verbose) console.log(`\nSending Jobs.\n`);
+        
         JobRunner.totalJobs = this._files.length;
         JobRunner.finishedJobs = 0;
         JobRunner.startTime = Date.now();
         JobRunner.globalSummary = { total: 0, founds: 0, errors: 0 };
+        
+        // Se verbose for false, passamos um progressCallback vazio para silenciar o JobRunner
         const progressCb = verbose ? undefined : () => {};
 
         while (chunksProceeded < this._chunks.length) {
-            await JobScheduler.init(this.MAX_CONCURRENT_PROCESSES, this.filters /* criteria, supposed to be query */, this.resolvedDataPath).exec(this._chunks[chunksProceeded], scriptToUse, this.dataSource, callback, this.parser, progressCb).finally(() => {
+            await JobScheduler.init(this.config).exec(
+                this._chunks[chunksProceeded], 
+                scriptToUse, 
+                this.dataSource, 
+                callback, 
+                this.config.parser, 
+                progressCb
+            ).finally(() => {
                 chunksProceeded = chunksProceeded + 1
             })
         }
@@ -109,4 +125,4 @@ export class JobOrchestrator<
         if (verbose) JobRunner.printGlobalSummary();
         return
     }
-}
+}

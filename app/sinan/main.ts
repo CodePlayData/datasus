@@ -17,7 +17,7 @@
 */
 
 import { MongoClient } from "mongodb";
-import { parser, sinan, subset } from "./service.js";
+import { sinan, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
 const DB_NAME = 'sinan';
@@ -28,7 +28,7 @@ await mongoClient.connect();
 const db = mongoClient.db(DB_NAME);
 const collection = db.collection(COLLECTION_NAME);
 
-await sinan.subset(subset, parser)
+await sinan.subset(subset)
 await sinan.exec(
     async (message: any) => {
         if (message.type === 'metadata') {} else {

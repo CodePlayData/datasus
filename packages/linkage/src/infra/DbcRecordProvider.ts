@@ -15,17 +15,21 @@
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
  */
-
 import { DbcReader } from "@codeplaydata/datasus-core";
 
 export class DbcRecordProvider {
     private reader: DbcReader | undefined;
 
-    constructor(private readonly filePath: string) { }
+    constructor(
+        private readonly filePath: string,
+        private readonly verbose: boolean = true
+    ) { }
 
     async subset(config: any, parser?: any): Promise<void> {
         // No-op for now. 
-        console.warn("Subset configuration provided but DbcRecordProvider does not support subsetting yet. All records will be processed.");
+        if (this.verbose) {
+            console.warn("Subset configuration provided but DbcRecordProvider does not support subsetting yet. All records will be processed.");
+        }
     }
 
     async exec(callback: (record: any) => Promise<void>): Promise<void> {

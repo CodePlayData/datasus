@@ -23,6 +23,7 @@ import { Parser } from "../../interface/utils/Parser.js";
 import { Records } from "../../core/Records.js";
 import { CriteriaObject } from "../../interface/criteria/CriteriaObject.js";
 import { Datasource } from "../../core/Datasource.js";
+import { JobConfig } from "./JobConfig.js";
 
 class FailToScheduleJob extends Error {
     constructor() {
@@ -47,11 +48,11 @@ class FailToScheduleJob extends Error {
 export class JobScheduler<D extends Datasource> implements Command {
     private filesProcessed: number = 0;
 
-    private constructor(readonly MAX_CONCURRENT_PROCESSES: number = 2, readonly criteria?: CriteriaObject[], readonly DATA_PATH?: string) {
+    private constructor(readonly config: JobConfig) {
     }
 
-    static init(MAX_CONCURRENT_PROCESSES?: number, criteria?: CriteriaObject[], DATA_PATH?: string) {
-        return new JobScheduler(MAX_CONCURRENT_PROCESSES, criteria, DATA_PATH)
+    static init(config: JobConfig) {
+        return new JobScheduler(config)
     }
 
     incrementFilesProcessed(qnt: number = 1) {
@@ -69,9 +70,10 @@ export class JobScheduler<D extends Datasource> implements Command {
         onError?: (error: Error, failedChunk?: TChunk[]) => Promise<void> | void
     ): Promise<void> {
         try {
+            const parserToUse = parser ?? this.config.parser;
             const promises = chunk.map((item) => {
                 const jobMessage = this.createJobMessage(item, dataSource);
-                return JobRunner.init(jobScript).exec(jobMessage, callback, parser, progressCallback)
+                return JobRunner.init(jobScript).exec(jobMessage, callback, parserToUse, progressCallback)
                     .then(() => {
                         this.incrementFilesProcessed();
                     });
@@ -86,8 +88,8 @@ export class JobScheduler<D extends Datasource> implements Command {
         return {
             src: dataSource,
             file: item as string,
-            criteria: this.criteria,
-            dataPath: this.DATA_PATH
+            criteria: this.config.filters,
+            dataPath: this.config.dataPath
         }
     }
 }

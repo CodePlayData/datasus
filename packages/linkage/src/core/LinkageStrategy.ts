@@ -31,8 +31,15 @@ export class LinkageStrategy implements Pipeline {
     constructor(
         readonly name: string,
         private readonly index: IndexStrategy = new InMemoryIndex(),
-        private readonly matchRepository?: MatchRepository
+        private readonly matchRepository?: MatchRepository,
+        private readonly verbose: boolean = true
     ) { }
+
+    private log(message: string) {
+        if (this.verbose) {
+            console.log(message);
+        }
+    }
 
     cohort(service: any, config: CohortConfig): LinkageStrategy {
         this.cohortStep = { service, config, blockingKeys: [] };
@@ -57,7 +64,7 @@ export class LinkageStrategy implements Pipeline {
         const blockingConfig = firstLinkage.config.blocking || firstLinkage.config.on;
         const cohortBlockingKeys = Object.keys(blockingConfig);
 
-        console.log(`[LinkageStrategy] Starting Cohort: ${this.cohortStep.config.name}`);
+        this.log(`[LinkageStrategy] Starting Cohort: ${this.cohortStep.config.name}`);
 
         if (this.cohortStep.config.subset) {
             if (this.cohortStep.service.subset) {
@@ -72,10 +79,10 @@ export class LinkageStrategy implements Pipeline {
             }
         });
 
-        console.log(`[LinkageStrategy] Cohort indexed using keys: ${cohortBlockingKeys.join(', ')}`);
+        this.log(`[LinkageStrategy] Cohort indexed using keys: ${cohortBlockingKeys.join(', ')}`);
 
         for (const step of this.linkageSteps) {
-            console.log(`[LinkageStrategy] Starting Linkage: ${step.config.name}`);
+            this.log(`[LinkageStrategy] Starting Linkage: ${step.config.name}`);
 
             if (step.config.subset) {
                 if (step.config.subset && step.service.subset) {
@@ -96,7 +103,7 @@ export class LinkageStrategy implements Pipeline {
                 for (const candidate of candidates) {
                     const isMatch = this.match(candidate, record, step.config);
                     if (isMatch) {
-                        console.log(`[MATCH] ${step.config.name}: Found match for key ${key}`);
+                        this.log(`[MATCH] ${step.config.name}: Found match for key ${key}`);
                         if (this.matchRepository) {
                             await this.matchRepository.save({
                                 cohort: candidate,
@@ -189,7 +196,7 @@ export class LinkageStrategy implements Pipeline {
             }
         }
         const threshold = config.threshold || 0;
-        console.log(`[FS] Score: ${score} (Threshold: ${threshold})`);
+        this.log(`[FS] Score: ${score} (Threshold: ${threshold})`);
         return score >= threshold;
     }
 }

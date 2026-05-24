@@ -19,6 +19,7 @@
 import {Client as FtpClient} from "basic-ftp/dist/Client.js";
 import {statSync} from "node:fs";
 import {FTPClient} from "./FTPClient.js";
+
 class CouldNotConnect extends Error {
     constructor(message?: string) {
         super(message ?? `Could not connect to the remote host.`);
