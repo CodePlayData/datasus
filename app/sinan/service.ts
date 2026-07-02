@@ -39,6 +39,6 @@ export const subset: SINANSubset = { src: 'TUBE', year: [2015, 2016, 2017, 2018,
 export const parser: SINANParser = SINANBasicParser.instanceOf(MockedDictionary);
 export const sinan = SINANService.init(gateway, {
     concurrency: MAX_CONCURRENT_PROCESSES,
-    dataPath: "E:/DatasusFiles/",
+    dataPath: "./data",
     parser: parser
 });

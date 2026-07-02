@@ -1,4 +1,4 @@
-// @filename: SINANService.ts
+// @filename: SIHSUSParser.ts
 
 /*
  *     Copyright 2026 Pedro Paulo Teixeira dos Santos
@@ -16,9 +16,6 @@
  *     limitations under the License.
  */
 
-import {JobOrchestrator} from "@codeplaydata/datasus-core";
-import {SINANSubset} from "./SINANSubset.js";
-import {SINANDatasource} from "./SINANDatasource.js";
-import {SINANGateway} from "./SINANGateway.js";
+import { Parser, Records } from "@codeplaydata/datasus-core";
 
-export class SINANService extends JobOrchestrator<SINANSubset, SINANDatasource, SINANGateway> {}
+export interface SIHSUSParser extends Parser<Records>{}

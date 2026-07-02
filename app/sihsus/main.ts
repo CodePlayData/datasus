@@ -17,12 +17,28 @@
 */
 
 import {MongoClient} from "mongodb";
+import { sihsus, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
 const DB_NAME = 'sihsus';
-const COLLECTION_NAME = 'sanatorio';
+const COLLECTION_NAME = 'sanatorio_aih_rejeitadas';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
 const db = mongoClient.db(DB_NAME);
 const collection = db.collection(COLLECTION_NAME);
+
+await sihsus.subset(subset)
+await sihsus.exec(
+    async (message: any) => {
+        if (message.type === 'metadata') {} else {
+            await collection.insertOne(message);
+        }
+    }
+).finally(
+    async () => {
+        console.log('Done!');
+        await mongoClient.close();
+        process.exit(0);
+    }
+)
