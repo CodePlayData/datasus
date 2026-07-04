@@ -18,7 +18,7 @@
 
 import { SIASUSService } from "./src/SIASUSService.js";
 import { BPAIRecord } from "./utils/BPAIRecord.js";
-import { Criteria, BasicFTPClient, ArrayCriteria } from "@codeplaydata/datasus-core";
+import { Criteria, BasicFTPClient, ArrayCriteria, StringCriteria } from "@codeplaydata/datasus-core";
 import { SIAFTPGateway } from "./src/SIAFTPGateway.js";
 import { SIABasicParser } from "./src/SIABasicParser.js";
 import { CBO } from "./utils/CBO.js";
@@ -33,16 +33,18 @@ if (!(ftpClient instanceof BasicFTPClient)) {
 }
 const gateway = await SIAFTPGateway.getInstanceOf(ftpClient!)
 const criteria = Criteria.set([
-    new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF'),
+    new StringCriteria("2270196", "PA_CODUNI"),
+    
+    //new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF'),
     //new ArrayCriteria<BPAIRecord>(Object.values(SIGTAP), "PROC_ID")
 ]);
 
 export const BIDictionary = new Map<string, (value: any) => any>([
-    ['CNS_PAC', (value: string) => Buffer.from((value as String)).toString("hex")]
+    //['CNS_PAC', (value: string) => Buffer.from((value as String)).toString("hex")]
 ]);
 
 export const subset: SIASubset = {
-    src: 'BI',
+    src: 'PA',
     states: ['RJ'],
     period: {
         start: {
@@ -60,6 +62,6 @@ export const parser = SIABasicParser.instanceOf(BIDictionary);
 export const sia = SIASUSService.init(gateway, {
     filters: criteria.toDTO(),
     concurrency: MAX_CONCURRENT_PROCESSES,
-    dataPath: "E:/DatasusFiles/",
+    dataPath: "./data",
     parser: parser
 });

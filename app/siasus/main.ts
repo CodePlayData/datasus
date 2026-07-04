@@ -20,8 +20,8 @@ import { MongoClient } from "mongodb";
 import { sia, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
-const DB_NAME = 'siasus_oral_health';
-const COLLECTION_NAME = 'full_data';
+const DB_NAME = 'siasus';
+const COLLECTION_NAME = 'sanatorio_bpa';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
@@ -32,13 +32,14 @@ await sia.subset(subset)
 await sia.exec(
     async (message: any) => {
         if (message.type === 'metadata') {} else {
-            await collection.insertOne(message);
+            console.log(message);
+            //await collection.insertOne(message);
         }
     }
 ).finally(
     async () => {
         console.log('Done!');
-        await mongoClient.close();
+        //await mongoClient.close();
         process.exit(0);
     }
 );

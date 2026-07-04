@@ -39,11 +39,11 @@ export const subset: SIMSubset = {
     states: ['RJ'],
     period: {
         start: {
-            year: 2025,
+            year: 2024,
             month: '01'
         },
         end: {
-            year: 2025,
+            year: 2024,
             month: '12'
         }
     }

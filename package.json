@@ -7,7 +7,6 @@
     "packages/*"
   ],
   "scripts": {
-
     "build": "tsc -b",
     "build:core": "npm run build -w @codeplaydata/datasus-core",
     "build:linkage": "npm run build -w @codeplaydata/datasus-linkage",
@@ -16,7 +15,8 @@
     "siasus:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/siasus/main.js",
     "siasus:linkage": "npm run build:app && node --max-old-space-size=4096 ./dist/app/siasus/linkage.js",
     "sinan:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sinan/main.js",
-
+    "sihsus:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sihsus/main.js",
+    
     "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:unit": "npx tsx --test test/unit/**/*.test.ts",
     "test:integration": "npx tsx --test test/integration/**/*.test.ts",
@@ -35,7 +35,7 @@
   "license": "Apache-2.0",
   "description": "This application decompress the datasus micro data and serve as a gateway class.",
   "devDependencies": {
-    "@types/node": "^22.15.23",
+    "@types/node": "^22.20.0",
     "mongodb": "^7.0.0",
     "typescript": "^5.8.3"
   }
