@@ -16,7 +16,7 @@
  *     limitations under the License.
  */
 
-import { WeightConfig } from "./WeightConfig.js";
+import { WeightConfig } from "./WeightConfig";
 
 export type LinkageConfig = {
     name: string;

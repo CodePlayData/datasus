@@ -20,7 +20,7 @@
 import { Pipeline, Records } from "@codeplaydata/datasus-core";
 import { IndexStrategy } from "../interface/IndexStrategy";
 import { CohortConfig } from "./CohortConfig";
-import { LinkageConfig } from "../LinkageConfig";
+import { LinkageConfig } from "../infra/LinkageConfig";
 import { InMemoryIndex } from "../infra/InMemoryIndex";
 import { MatchRepository } from "../interface/MatchRepository";
 
@@ -101,13 +101,14 @@ export class LinkageStrategy implements Pipeline {
                 if (candidates.length === 0) return;
 
                 for (const candidate of candidates) {
-                    const isMatch = this.match(candidate, record, step.config);
-                    if (isMatch) {
-                        this.log(`[MATCH] ${step.config.name}: Found match for key ${key}`);
+                    const result = this.match(candidate, record, step.config);
+                    if (result.isMatch) {
+                        this.log(`[MATCH] ${step.config.name}: Found match for key ${key} (score: ${result.score ?? 'N/A'})`);
                         if (this.matchRepository) {
                             await this.matchRepository.save({
                                 cohort: candidate,
                                 target: record,
+                                score: result.score,
                                 config: step.config,
                                 timestamp: new Date()
                             });
@@ -122,14 +123,14 @@ export class LinkageStrategy implements Pipeline {
         return fields.map(f => record[f]).join('_');
     }
 
-    private match(cohortRecord: Records, targetRecord: Records, config: LinkageConfig): boolean {
+    private match(cohortRecord: Records, targetRecord: Records, config: LinkageConfig): { isMatch: boolean; score?: number } {
         if (config.type === 'deterministic') {
             for (const [cohortField, targetField] of Object.entries(config.on)) {
                 if (cohortRecord[cohortField] !== targetRecord[targetField]) {
-                    return false;
+                    return { isMatch: false };
                 }
             }
-            return true;
+            return { isMatch: true };
         }
 
         if (config.type === 'probabilistic') {
@@ -142,10 +143,10 @@ export class LinkageStrategy implements Pipeline {
             }
         }
 
-        return false;
+        return { isMatch: false };
     }
 
-    private matchSimple(cohortRecord: Records, targetRecord: Records, config: LinkageConfig): boolean {
+    private matchSimple(cohortRecord: Records, targetRecord: Records, config: LinkageConfig): { isMatch: boolean; score: number } {
         let score = 0;
         let totalWeight = 0;
 
@@ -165,10 +166,10 @@ export class LinkageStrategy implements Pipeline {
         const normalizedScore = totalWeight > 0 ? score / totalWeight : 0;
         const threshold = config.threshold || 0.85;
 
-        return normalizedScore >= threshold;
+        return { isMatch: normalizedScore >= threshold, score: normalizedScore };
     }
 
-    private matchFellegiSunter(cohortRecord: Records, targetRecord: Records, config: LinkageConfig): boolean {
+    private matchFellegiSunter(cohortRecord: Records, targetRecord: Records, config: LinkageConfig): { isMatch: boolean; score: number } {
         let score = 0;
 
         for (const [cohortField, targetField] of Object.entries(config.on)) {
@@ -202,6 +203,6 @@ export class LinkageStrategy implements Pipeline {
         }
         const threshold = config.threshold || 0;
         this.log(`[FS] Score: ${score} (Threshold: ${threshold})`);
-        return score >= threshold;
+        return { isMatch: score >= threshold, score };
     }
 }

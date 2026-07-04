@@ -34,6 +34,7 @@ import { StringCriteria } from "./interface/criteria/StringCriteria.js";
 import { ArrayCriteria } from "./interface/criteria/ArrayCriteria.js";
 import { DbcReader } from "./infra/dbc/DbcReader.js";
 import { DbcWriter } from "./infra/dbc/DbcWriter.js";
+import { MultiDbcProvider } from "./infra/dbc/MultiDbcProvider.js";
 
 export {
     DATASUSGenericFTPGateway,
@@ -53,5 +54,6 @@ export {
     ArrayCriteria,
     Pipeline,
     DbcReader,
-    DbcWriter
+    DbcWriter,
+    MultiDbcProvider,
 }

@@ -20,12 +20,16 @@ import { DATASUSCountryYearFTPGateway, FTPClient } from "@codeplaydata/datasus-c
 import { SINANSubset } from "./SINANSubset.js";
 
 export class SINANFTPGateway extends DATASUSCountryYearFTPGateway<SINANSubset> {
-    private constructor(ftp: FTPClient) {
-        super(ftp, '/dissemin/publicos/SINAN/DADOS/PRELIM/')
+    private constructor(ftp: FTPClient, path = '/dissemin/publicos/SINAN/DADOS/PRELIM/') {
+        super(ftp, path)
     }
 
     static async getInstanceOf(ftp: FTPClient) {
         return new SINANFTPGateway(ftp)
+    }
+
+    static async getFinalsInstanceOf(ftp: FTPClient) {
+        return new SINANFTPGateway(ftp, '/dissemin/publicos/SINAN/DADOS/FINAIS/')
     }
 }
 
