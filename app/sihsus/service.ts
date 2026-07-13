@@ -17,7 +17,7 @@
 */
 
 import { BasicFTPClient, Criteria, StringCriteria, DATASUSFTPGateway, StatePeriodStrategy } from "@codeplaydata/datasus-core";
-import { SIHSUSSubset } from "./SIHSUSSubset.js";
+import { SIHSUSSubset } from "./src/SIHSUSSubset.js";
 import { SIHSUSParser } from "./src/SIHSUSParser.js"
 import { SIHSUSBasicParser } from "./src/SIHSUSBasicParser.js"
 import { SIHSUSService } from "./src/SIHSUSService.js";

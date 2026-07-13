@@ -17,10 +17,10 @@
 */
 
 import { BasicFTPClient, Criteria, StringCriteria, DATASUSFTPGateway, CountryYearStrategy } from "@codeplaydata/datasus-core";
-import { SINANSubset } from "./SINANSubset.js";
-import { SINANService } from "./SINANService.js";
-import { SINANParser } from "./SINANParser.js";
-import { SINANBasicParser } from "./SINANBasicParser.js";
+import { SINANSubset } from "./src/SINANSubset.js";
+import { SINANService } from "./src/SINANService.js";
+import { SINANParser } from "./src/SINANParser.js";
+import { SINANBasicParser } from "./src/SINANBasicParser.js";
 
 const MAX_CONCURRENT_PROCESSES = 4;
 const FTP_HOST = 'ftp.datasus.gov.br';
