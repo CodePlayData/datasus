@@ -28,9 +28,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Client as FtpClient } from 'basic-ftp/dist/Client.js';
 
-import { BasicFTPClient } from '../../../../packages/core/src/infra/ftp/BasicFTPClient.js';
-import { DATASUSStatePeriodFTPGateway } from '../../../../packages/core/src/interface/gateway/DATASUSStatePeriodFTPGateway.js';
-import { DATASUSCountryYearFTPGateway } from '../../../../packages/core/src/interface/gateway/DATASUSCountryYearFTPGateway.js';
+import { BasicFTPClient, DATASUSFTPGateway, StatePeriodStrategy, CountryYearStrategy } from '../../../../packages/core/src/index.js';
 
 // Dados simulando a resposta real do FTP do DataSUS (SIASUS)
 const SIASUS_FTP_LISTING = [
@@ -72,7 +70,7 @@ describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
             mock.method(FtpClient.prototype, 'list', async () => SIASUS_FTP_LISTING);
 
             const client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
-            const gateway = new DATASUSStatePeriodFTPGateway(client, '/dissemin/publicos/SIASUS/200801_/Dados/');
+            const gateway = new DATASUSFTPGateway(client, '/dissemin/publicos/SIASUS/200801_/Dados/', new StatePeriodStrategy());
 
             const result = await gateway.list({ src: 'PA' } as any, 'short') as string[];
 
@@ -87,7 +85,7 @@ describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
             mock.method(FtpClient.prototype, 'list', async () => SIASUS_FTP_LISTING);
 
             const client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
-            const gateway = new DATASUSStatePeriodFTPGateway(client, '/path/');
+            const gateway = new DATASUSFTPGateway(client, '/path/', new StatePeriodStrategy());
 
             const subset = {
                 src: 'PA',
@@ -114,7 +112,7 @@ describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
             mock.method(FtpClient.prototype, 'list', async () => SIASUS_FTP_LISTING);
 
             const client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
-            const gateway = new DATASUSStatePeriodFTPGateway(client, '/path/');
+            const gateway = new DATASUSFTPGateway(client, '/path/', new StatePeriodStrategy());
 
             const subset = {
                 src: 'PA',
@@ -137,7 +135,7 @@ describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
             mock.method(FtpClient.prototype, 'list', async () => SIASUS_FTP_LISTING);
 
             const client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
-            const gateway = new DATASUSStatePeriodFTPGateway(client, '/path/');
+            const gateway = new DATASUSFTPGateway(client, '/path/', new StatePeriodStrategy());
 
             const result = await gateway.list({ src: 'PA', states: ['AC'] } as any, 'full');
 
@@ -154,7 +152,7 @@ describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
             const dest = join(tmpdir(), `ingestion_test_${Date.now()}.dbc`);
 
             const client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
-            const gateway = new DATASUSStatePeriodFTPGateway(client, '/dissemin/publicos/SIASUS/200801_/Dados/');
+            const gateway = new DATASUSFTPGateway(client, '/dissemin/publicos/SIASUS/200801_/Dados/', new StatePeriodStrategy());
 
             await gateway.get('PAAC1001.dbc', dest);
 
@@ -172,7 +170,7 @@ describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
             mock.method(FtpClient.prototype, 'list', async () => SINAN_FTP_LISTING);
 
             const client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
-            const gateway = new DATASUSCountryYearFTPGateway(client, '/dissemin/publicos/SINAN/DADOS/FINAIS/');
+            const gateway = new DATASUSFTPGateway(client, '/dissemin/publicos/SINAN/DADOS/FINAIS/', new CountryYearStrategy());
 
             const result = await gateway.list({ src: 'DENG' } as any, 'short') as string[];
 
@@ -186,7 +184,7 @@ describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
             mock.method(FtpClient.prototype, 'list', async () => SINAN_FTP_LISTING);
 
             const client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
-            const gateway = new DATASUSCountryYearFTPGateway(client, '/path/');
+            const gateway = new DATASUSFTPGateway(client, '/path/', new CountryYearStrategy());
 
             const subset = { src: 'DENG', year: [2019, 2020] } as any;
             const result = await gateway.list(subset, 'short') as string[];
@@ -202,7 +200,7 @@ describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
             mock.method(FtpClient.prototype, 'list', async () => SINAN_FTP_LISTING);
 
             const client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
-            const gateway = new DATASUSCountryYearFTPGateway(client, '/path/');
+            const gateway = new DATASUSFTPGateway(client, '/path/', new CountryYearStrategy());
 
             const result = await gateway.list({ src: 'DENG', year: [2019] } as any, 'full');
 
@@ -217,7 +215,7 @@ describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
             const dest = join(tmpdir(), `ingestion_sinan_${Date.now()}.dbc`);
 
             const client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
-            const gateway = new DATASUSCountryYearFTPGateway(client, '/dissemin/publicos/SINAN/DADOS/FINAIS/');
+            const gateway = new DATASUSFTPGateway(client, '/dissemin/publicos/SINAN/DADOS/FINAIS/', new CountryYearStrategy());
 
             await gateway.get('DENGBR19.dbc', dest);
 

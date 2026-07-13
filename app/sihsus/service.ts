@@ -16,11 +16,10 @@
  *     limitations under the License.
 */
 
-import {BasicFTPClient, Criteria, StringCriteria} from "@codeplaydata/datasus-core";
-import {SIHSUSFTPGateway} from "./src/SIHSUSFTPGateway.js";
-import {SIHSUSSubset} from "./src/SIHSUSSubset.js";
-import {SIHSUSParser} from "./src/SIHSUSParser.js"
-import {SIHSUSBasicParser} from "./src/SIHSUSBasicParser.js"
+import { BasicFTPClient, Criteria, StringCriteria, DATASUSFTPGateway, StatePeriodStrategy } from "@codeplaydata/datasus-core";
+import { SIHSUSSubset } from "./SIHSUSSubset.js";
+import { SIHSUSParser } from "./src/SIHSUSParser.js"
+import { SIHSUSBasicParser } from "./src/SIHSUSBasicParser.js"
 import { SIHSUSService } from "./src/SIHSUSService.js";
 
 const MAX_CONCURRENT_PROCESSES = 4;
@@ -29,7 +28,7 @@ const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = await SIHSUSFTPGateway.getInstanceOf(ftpClient);
+const gateway = new DATASUSFTPGateway(ftpClient, '/dissemin/publicos/SIHSUS/200801_/Dados/', new StatePeriodStrategy());
 const criteria = Criteria.set([
     new StringCriteria("2270196", "CNES")
 ])

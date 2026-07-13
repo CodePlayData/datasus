@@ -21,7 +21,7 @@ import { sia, parser, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
 const DB_NAME = 'sim';
-const COLLECTION_NAME = 'upa_deaths';
+const COLLECTION_NAME = 'rj_total';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();

@@ -18,8 +18,7 @@
 
 import { SIASUSService } from "./src/SIASUSService.js";
 import { BPAIRecord } from "./utils/BPAIRecord.js";
-import { Criteria, BasicFTPClient, ArrayCriteria, StringCriteria } from "@codeplaydata/datasus-core";
-import { SIAFTPGateway } from "./src/SIAFTPGateway.js";
+import { Criteria, BasicFTPClient, ArrayCriteria, StringCriteria, DATASUSFTPGateway, StatePeriodStrategy } from "@codeplaydata/datasus-core";
 import { SIABasicParser } from "./src/SIABasicParser.js";
 import { CBO } from "./utils/CBO.js";
 import { SIASubset } from "./src/SIASubset.js";
@@ -31,7 +30,7 @@ const ftpClient = await BasicFTPClient.connect(FTP_HOST)
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = await SIAFTPGateway.getInstanceOf(ftpClient!)
+const gateway = new DATASUSFTPGateway(ftpClient!, '/dissemin/publicos/SIASUS/200801_/Dados/', new StatePeriodStrategy());
 const criteria = Criteria.set([
     new StringCriteria("2270196", "PA_CODUNI"),
     

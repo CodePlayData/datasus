@@ -1,4 +1,4 @@
-// @filename: SIMFTPGateway.ts
+// @filename: NamingStrategy.ts
 
 /*
  *     Copyright 2026 Pedro Paulo Teixeira dos Santos
@@ -14,17 +14,10 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
-*/
+ */
 
-import { DATASUSStateYearFTPGateway, FTPClient } from "@codeplaydata/datasus-core"
-import { SIMSubset } from "./SIMSubset.js"
+import { Subset } from "../../core/Subset.js";
 
-export class SIMFTPGateway extends DATASUSStateYearFTPGateway<SIMSubset> {
-    private constructor(ftp: FTPClient) {
-        super(ftp, '/dissemin/publicos/SIM/CID10/DORES/')
-    }
-
-    static async getInstanceOf(ftp: FTPClient) {
-        return new SIMFTPGateway(ftp)
-    }
+export interface NamingStrategy<S extends Subset> {
+    buildPrefixes(input: S): string[];
 }

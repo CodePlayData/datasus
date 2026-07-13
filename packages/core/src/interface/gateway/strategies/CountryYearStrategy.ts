@@ -1,7 +1,7 @@
-// @filename: SIAFTPGateway.ts
+// @filename: CountryYearStrategy.ts
 
 /*
- *     Copyright 2025 Pedro Paulo Teixeira dos Santos
+ *     Copyright 2026 Pedro Paulo Teixeira dos Santos
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -16,17 +16,18 @@
  *     limitations under the License.
  */
 
+import { NamingStrategy } from "../NamingStrategy.js";
+import { Subset } from "../../../core/Subset.js";
 
-import {DATASUSStatePeriodFTPGateway, FTPClient} from "@codeplaydata/datasus-core";
-import {SIASubset} from "./SIASubset.js";
+export class CountryYearStrategy implements NamingStrategy<Subset> {
+    buildPrefixes(input: Subset): string[] {
+        if ('src' in input && 'year' in input && Array.isArray(input.year)) {
+            return (input.year as number[]).map(y => {
+                const yy = y.toString().slice(-2);
+                return `${input.src}BR${yy}`;
+            });
+        }
 
-// TODO: Testar apenas a conexão com o caminho exato
-export class SIAFTPGateway extends DATASUSStatePeriodFTPGateway<SIASubset> {
-    private constructor(ftp: FTPClient) {
-        super(ftp, '/dissemin/publicos/SIASUS/200801_/Dados/')
-    }
-
-    static async getInstanceOf(ftp: FTPClient) {
-        return new SIAFTPGateway(ftp)
+        return [input.src];
     }
 }

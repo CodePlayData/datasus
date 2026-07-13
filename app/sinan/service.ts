@@ -16,12 +16,11 @@
  *     limitations under the License.
 */
 
-import {BasicFTPClient, Criteria, StringCriteria} from "@codeplaydata/datasus-core";
-import {SINANFTPGateway} from "./src/SINANFTPGateway.js";
-import {SINANSubset} from "./src/SINANSubset.js";
-import {SINANService} from "./src/SINANService.js";
-import {SINANParser} from "./src/SINANParser.js";
-import {SINANBasicParser} from "./src/SINANBasicParser.js";
+import { BasicFTPClient, Criteria, StringCriteria, DATASUSFTPGateway, CountryYearStrategy } from "@codeplaydata/datasus-core";
+import { SINANSubset } from "./SINANSubset.js";
+import { SINANService } from "./SINANService.js";
+import { SINANParser } from "./SINANParser.js";
+import { SINANBasicParser } from "./SINANBasicParser.js";
 
 const MAX_CONCURRENT_PROCESSES = 4;
 const FTP_HOST = 'ftp.datasus.gov.br';
@@ -29,7 +28,7 @@ const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = await SINANFTPGateway.getInstanceOf(ftpClient);
+const gateway = new DATASUSFTPGateway(ftpClient, '/dissemin/publicos/SINAN/DADOS/PRELIM/', new CountryYearStrategy());
 const criteria = Criteria.set([
     new StringCriteria("33", "SG_UF_NOT")
 ]);

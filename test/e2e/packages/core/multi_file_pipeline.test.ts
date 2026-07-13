@@ -29,8 +29,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 
-import { BasicFTPClient } from '../../../../packages/core/src/infra/ftp/BasicFTPClient.js';
-import { DATASUSStatePeriodFTPGateway } from '../../../../packages/core/src/interface/gateway/DATASUSStatePeriodFTPGateway.js';
+import { BasicFTPClient, DATASUSFTPGateway, StatePeriodStrategy } from '../../../../packages/core/src/index.js';
 import { JobOrchestrator } from '../../../../packages/core/src/infra/job/JobOrchestrator.js';
 
 const SIASUS_PATH = '/dissemin/publicos/SIASUS/200801_/Dados/';
@@ -50,7 +49,7 @@ describe('E2E: Pipeline Múltiplos Arquivos e Concorrência', () => {
         client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
         assert.ok(client instanceof BasicFTPClient);
 
-        const gateway = new DATASUSStatePeriodFTPGateway(client, SIASUS_PATH);
+        const gateway = new DATASUSFTPGateway(client, SIASUS_PATH, new StatePeriodStrategy());
         
         // MAX_CONCURRENT_PROCESSES = 2 para forçar paralelismo
         const orchestrator = JobOrchestrator.init(gateway, { concurrency: 2, dataPath: DATA_DIR, verbose: false });

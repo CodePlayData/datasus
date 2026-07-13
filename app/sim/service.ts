@@ -17,8 +17,7 @@
 */
 
 
-import { Criteria, BasicFTPClient, ArrayCriteria } from "@codeplaydata/datasus-core";
-import { SIMFTPGateway } from "./src/SIMFTPGateway.js";
+import { Criteria, BasicFTPClient, ArrayCriteria, DATASUSFTPGateway, StateYearStrategy } from "@codeplaydata/datasus-core";
 import { SIMSubset } from "./src/SIMSubset.js";
 import { SIMBasicParser } from "./src/SIMBasicParser.js";
 import { SIMService } from "./src/SIMService.js";
@@ -30,7 +29,7 @@ const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = await SIMFTPGateway.getInstanceOf(ftpClient!);
+const gateway = new DATASUSFTPGateway(ftpClient!, '/dissemin/publicos/SIM/CID10/DORES/', new StateYearStrategy());
 
 const criteria = Criteria.set([
     //new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF'),
@@ -44,7 +43,7 @@ export const MockedDictionary = new Map<string, (value: any) => any>([
 export const subset: SIMSubset = {
    src: 'DO',
    states: ['RJ'],
-   year: [2022]
+   year: [2024]
 }
 
 export const parser = SIMBasicParser.instanceOf(MockedDictionary);

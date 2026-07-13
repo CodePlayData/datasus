@@ -29,8 +29,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 
-import { BasicFTPClient } from '../../../../packages/core/src/infra/ftp/BasicFTPClient.js';
-import { DATASUSCountryYearFTPGateway } from '../../../../packages/core/src/interface/gateway/DATASUSCountryYearFTPGateway.js';
+import { BasicFTPClient, DATASUSFTPGateway, CountryYearStrategy } from '../../../../packages/core/src/index.js';
 import { JobOrchestrator } from '../../../../packages/core/src/infra/job/JobOrchestrator.js';
 import { DbcWriter } from '../../../../packages/core/src/infra/dbc/DbcWriter.js';
 import { DbcReader } from '../../../../packages/core/src/infra/dbc/DbcReader.js';
@@ -65,7 +64,7 @@ describe('E2E: Pipeline CountryYear (SINAN-like, ZIKA 2019)', () => {
         assert.ok(client instanceof BasicFTPClient);
 
         // 3. Gateway CountryYear + Orchestrator
-        const gateway = new DATASUSCountryYearFTPGateway(client, SINAN_PATH);
+        const gateway = new DATASUSFTPGateway(client, SINAN_PATH, new CountryYearStrategy());
         const orchestrator = JobOrchestrator.init(gateway, { concurrency: 1, dataPath: DATA_DIR, verbose: false });
 
         const subset = { src: 'ZIKA', year: [2019] };

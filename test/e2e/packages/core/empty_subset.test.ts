@@ -26,8 +26,7 @@
 import { describe, it, after } from 'node:test';
 import { strict as assert } from 'node:assert';
 
-import { BasicFTPClient } from '../../../../packages/core/src/infra/ftp/BasicFTPClient.js';
-import { DATASUSStatePeriodFTPGateway } from '../../../../packages/core/src/interface/gateway/DATASUSStatePeriodFTPGateway.js';
+import { BasicFTPClient, DATASUSFTPGateway, StatePeriodStrategy } from '../../../../packages/core/src/index.js';
 import { JobOrchestrator } from '../../../../packages/core/src/infra/job/JobOrchestrator.js';
 
 const SIASUS_PATH = '/dissemin/publicos/SIASUS/200801_/Dados/';
@@ -45,7 +44,7 @@ describe('E2E: Resiliência — Subset sem dados', () => {
         assert.ok(client instanceof BasicFTPClient);
 
         // 2. Gateway + Orchestrator
-        const gateway = new DATASUSStatePeriodFTPGateway(client, SIASUS_PATH);
+        const gateway = new DATASUSFTPGateway(client, SIASUS_PATH, new StatePeriodStrategy());
         const orchestrator = JobOrchestrator.init(gateway, { concurrency: 1, verbose: false });
 
         // Subset com estado inexistente — nenhum arquivo deve ser encontrado

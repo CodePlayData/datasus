@@ -29,8 +29,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { existsSync, unlinkSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 
-import { BasicFTPClient } from '../../../../packages/core/src/infra/ftp/BasicFTPClient.js';
-import { DATASUSStatePeriodFTPGateway } from '../../../../packages/core/src/interface/gateway/DATASUSStatePeriodFTPGateway.js';
+import { BasicFTPClient, DATASUSFTPGateway, StatePeriodStrategy } from '../../../../packages/core/src/index.js';
 import { JobOrchestrator } from '../../../../packages/core/src/infra/job/JobOrchestrator.js';
 import { DbcWriter } from '../../../../packages/core/src/infra/dbc/DbcWriter.js';
 import { DbcReader } from '../../../../packages/core/src/infra/dbc/DbcReader.js';
@@ -66,7 +65,7 @@ describe('E2E: Pipeline StatePeriod (SIASUS-like)', () => {
         assert.ok(client instanceof BasicFTPClient, 'Deve conectar ao FTP do DataSUS');
 
         // 3. Gateway + Orchestrator
-        const gateway = new DATASUSStatePeriodFTPGateway(client, SIASUS_PATH);
+        const gateway = new DATASUSFTPGateway(client, SIASUS_PATH, new StatePeriodStrategy());
         const orchestrator = JobOrchestrator.init(gateway, { concurrency: 1, dataPath: DATA_DIR, verbose: false });
 
         const subset = {
