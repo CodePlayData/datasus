@@ -43,7 +43,8 @@ export const MockedDictionary = new Map<string, (value: any) => any>([
 
 export const subset: SIMSubset = {
    src: 'DO',
-   states: ['RJ']
+   states: ['RJ'],
+   year: [2022]
 }
 
 export const parser = SIMBasicParser.instanceOf(MockedDictionary);

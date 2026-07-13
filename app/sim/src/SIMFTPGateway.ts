@@ -16,10 +16,10 @@
  *     limitations under the License.
 */
 
-import { DATASUSCountryYearFTPGateway, FTPClient } from "@codeplaydata/datasus-core"
+import { DATASUSStateYearFTPGateway, FTPClient } from "@codeplaydata/datasus-core"
 import { SIMSubset } from "./SIMSubset.js"
 
-export class SIMFTPGateway extends DATASUSCountryYearFTPGateway<SIMSubset> {
+export class SIMFTPGateway extends DATASUSStateYearFTPGateway<SIMSubset> {
     private constructor(ftp: FTPClient) {
         super(ftp, '/dissemin/publicos/SIM/CID10/DORES/')
     }

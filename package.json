@@ -17,12 +17,13 @@
     "sinan:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sinan/main.js",
     "sihsus:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sihsus/main.js",
     "sim:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sim/main.js",
-    
+
     "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:unit": "npx tsx --test test/unit/**/*.test.ts",
+    "pretest:integration": "npx tsx test/integration/packages/core/fixtures/download_fixture.ts",
     "test:integration": "npx tsx --test test/integration/**/*.test.ts",
     "test:e2e": "npx tsx --test-timeout 120000 --test test/e2e/**/*.test.ts",
-
+    
     "publish": "npm publish --workspaces --access=public",
     "publish:core": "npm publish -w @codeplaydata/datasus-core --access=public",
     "publish:linkage": "npm publish -w @codeplaydata/datasus-linkage --access=public"
@@ -36,7 +37,7 @@
   "license": "Apache-2.0",
   "description": "This application decompress the datasus micro data and serve as a gateway class.",
   "devDependencies": {
-    "@types/node": "^22.20.0",
+    "@types/node": "^22.20.1",
     "mongodb": "^7.0.0",
     "typescript": "^5.8.3"
   }
