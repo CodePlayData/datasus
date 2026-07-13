@@ -21,7 +21,7 @@ import { sinan, subset } from "./service.js";
 
 const MONGO_URI = 'mongodb://localhost:27017';
 const DB_NAME = 'sinan';
-const COLLECTION_NAME = 'tb';
+const COLLECTION_NAME = 'tb_rj';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();

@@ -18,4 +18,4 @@
 
 import { Parser, Records } from "@codeplaydata/datasus-core";
 
-export interface SIAParser extends Parser<Records> { }
+export interface SIMParser extends Parser<Records> { }

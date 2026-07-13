@@ -42,7 +42,7 @@ export const subset: SIHSUSSubset = {
     states: ['RJ'],
     period: {
         start: {
-            year: 2009,
+            year: 2026,
             month: '11'
         },
         end: {

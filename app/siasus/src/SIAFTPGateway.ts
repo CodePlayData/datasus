@@ -20,6 +20,7 @@
 import {DATASUSStatePeriodFTPGateway, FTPClient} from "@codeplaydata/datasus-core";
 import {SIASubset} from "./SIASubset.js";
 
+// TODO: Testar apenas a conexão com o caminho exato
 export class SIAFTPGateway extends DATASUSStatePeriodFTPGateway<SIASubset> {
     private constructor(ftp: FTPClient) {
         super(ftp, '/dissemin/publicos/SIASUS/200801_/Dados/')

@@ -32,14 +32,14 @@ await sia.subset(subset)
 await sia.exec(
     async (message: any) => {
         if (message.type === 'metadata') {} else {
-            console.log(message);
-            //await collection.insertOne(message);
+            //console.log(message);
+            await collection.insertOne(message);
         }
     }
 ).finally(
     async () => {
         console.log('Done!');
-        //await mongoClient.close();
+        await mongoClient.close();
         process.exit(0);
     }
 );

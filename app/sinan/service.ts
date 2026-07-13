@@ -16,7 +16,7 @@
  *     limitations under the License.
 */
 
-import {BasicFTPClient} from "@codeplaydata/datasus-core";
+import {BasicFTPClient, Criteria, StringCriteria} from "@codeplaydata/datasus-core";
 import {SINANFTPGateway} from "./src/SINANFTPGateway.js";
 import {SINANSubset} from "./src/SINANSubset.js";
 import {SINANService} from "./src/SINANService.js";
@@ -30,14 +30,18 @@ if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
 const gateway = await SINANFTPGateway.getInstanceOf(ftpClient);
+const criteria = Criteria.set([
+    new StringCriteria("33", "SG_UF_NOT")
+]);
 
 export const MockedDictionary = new Map<string, (value: any) => any>([
     ['', (value: string) => undefined]
 ]);
 
-export const subset: SINANSubset = { src: 'TUBE', year: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024] };
+export const subset: SINANSubset = { src: 'TUBE', year: [2025] };
 export const parser: SINANParser = SINANBasicParser.instanceOf(MockedDictionary);
 export const sinan = SINANService.init(gateway, {
+    filters: criteria.toDTO(),
     concurrency: MAX_CONCURRENT_PROCESSES,
     dataPath: "./data",
     parser: parser

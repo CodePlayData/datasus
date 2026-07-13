@@ -16,6 +16,7 @@
     "siasus:linkage": "npm run build:app && node --max-old-space-size=4096 ./dist/app/siasus/linkage.js",
     "sinan:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sinan/main.js",
     "sihsus:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sihsus/main.js",
+    "sim:main": "npm run build:app && node --max-old-space-size=4096 ./dist/app/sim/main.js",
     
     "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:unit": "npx tsx --test test/unit/**/*.test.ts",

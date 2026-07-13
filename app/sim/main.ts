@@ -28,7 +28,7 @@ await mongoClient.connect();
 const db = mongoClient.db(DB_NAME);
 const collection = db.collection(COLLECTION_NAME);
 
-await sia.subset(subset, parser)
+await sia.subset(subset)
 await sia.exec(
     async (message: any) => {
         if (message.type === 'metadata') {} else {

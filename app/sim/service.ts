@@ -18,36 +18,38 @@
 
 
 import { Criteria, BasicFTPClient, ArrayCriteria } from "@codeplaydata/datasus-core";
-import {SIMSubset} from "./src/SIMSubset";
+import { SIMFTPGateway } from "./src/SIMFTPGateway.js";
+import { SIMSubset } from "./src/SIMSubset.js";
+import { SIMBasicParser } from "./src/SIMBasicParser.js";
+import { SIMService } from "./src/SIMService.js";
 
 
 const MAX_CONCURRENT_PROCESSES = 4;
 const FTP_HOST = 'ftp.datasus.gov.br';
 const ftpClient = await BasicFTPClient.connect(FTP_HOST);
+if (!(ftpClient instanceof BasicFTPClient)) {
+    throw new Error('FTP connection failed');
+}
 const gateway = await SIMFTPGateway.getInstanceOf(ftpClient!);
+
 const criteria = Criteria.set([
     //new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF'),
-    new ArrayCriteria<DOREG>(["2270196"], "CODUNI")
+    //new ArrayCriteria(["2270196"], "CODUNI")
 ]);
 
-export const BIDictionary = new Map<string, (value: any) => any>([
-    ['CNS_PAC', (value: string) => Buffer.from((value as String)).toString("hex")]
+export const MockedDictionary = new Map<string, (value: any) => any>([
+    ['', (value: string) => undefined]
 ]);
 
 export const subset: SIMSubset = {
-    src: 'BI',
-    states: ['RJ'],
-    period: {
-        start: {
-            year: 2024,
-            month: '01'
-        },
-        end: {
-            year: 2024,
-            month: '12'
-        }
-    }
+   src: 'DO',
+   states: ['RJ']
 }
 
-export const parser = SIMBasicParser.instanceOf(BIDictionary);
-export const sia = SIMSUSService.init(gateway, criteria.toDTO(), MAX_CONCURRENT_PROCESSES, "E:/DatasusFiles/");
+export const parser = SIMBasicParser.instanceOf(MockedDictionary);
+export const sia = SIMService.init(gateway, {
+    filters: criteria.toDTO(),
+    concurrency: MAX_CONCURRENT_PROCESSES,
+    dataPath: "./data",
+    parser: parser,
+});

@@ -1,4 +1,4 @@
-// @filename: SIMSubset.ts
+// @filename: SIMFTPGateway.ts
 
 /*
  *     Copyright 2026 Pedro Paulo Teixeira dos Santos
@@ -16,10 +16,15 @@
  *     limitations under the License.
 */
 
-import { State } from "./State.js";
-import { Subset } from "@codeplaydata/datasus-core";
-import { SIMDatasource } from "./SIMDatasource";
+import { DATASUSCountryYearFTPGateway, FTPClient } from "@codeplaydata/datasus-core"
+import { SIMSubset } from "./SIMSubset.js"
 
-export type SIMSubset = Subset & { src: SIMDatasource }      |
-    { src: SIMDatasource, states: State[] }                  |
-    { src: SIMDatasource, states: State[], year: number[] };
+export class SIMFTPGateway extends DATASUSCountryYearFTPGateway<SIMSubset> {
+    private constructor(ftp: FTPClient) {
+        super(ftp, '/dissemin/publicos/SIM/CID10/DORES/')
+    }
+
+    static async getInstanceOf(ftp: FTPClient) {
+        return new SIMFTPGateway(ftp)
+    }
+}

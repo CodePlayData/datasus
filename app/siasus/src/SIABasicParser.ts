@@ -16,7 +16,7 @@
  *     limitations under the License.
  */
 
-
+// TODO: fazer teste unitário
 import { Parser, Records } from "@codeplaydata/datasus-core";
 
 export class SIABasicParser implements Parser<Records> {
