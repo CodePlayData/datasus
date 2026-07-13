@@ -60,6 +60,7 @@ export class DbcReader {
         try {
             statSync(io.output);
         } catch (error: any) {
+            //Aqui precisa da mensagem indicando que está descomprimindo e tem que ser um while...
             dbc2dbf(io);
         }
         let dbf = await DBFFile.open(io.output);

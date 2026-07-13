@@ -274,4 +274,107 @@ describe('Integração: Pipeline de Linkage (LinkageStrategy)', () => {
 
         assert.strictEqual(repository.all.length, 0, 'Não deve encontrar matches quando blocking keys diferem');
     });
+
+    it('deve mapear campos diferentes entre cohort e target (cross-field)', async () => {
+        const cohort = new MockRecordProvider([
+            { ID: '1', COD_PESSOA: '123', GENERO: 'M' },
+        ]);
+
+        const target = new MockRecordProvider([
+            { ID_EXT: '10', COD_CIDADAO: '123', SEXO: 'M' },
+            { ID_EXT: '20', COD_CIDADAO: '456', SEXO: 'F' },
+        ]);
+
+        const strategy = new LinkageStrategy('CrossFieldTest', index, repository, false);
+
+        strategy.cohort(cohort, { name: 'COHORT' });
+        strategy.link(target, {
+            name: 'TARGET',
+            type: 'deterministic',
+            on: { COD_PESSOA: 'COD_CIDADAO', GENERO: 'SEXO' },
+            blocking: { COD_PESSOA: 'COD_CIDADAO' },
+        });
+
+        await strategy.exec();
+
+        const matches = repository.all;
+        assert.strictEqual(matches.length, 1, 'Deve encontrar 1 match com cross-field mapping');
+        assert.strictEqual(matches[0].cohort.COD_PESSOA, '123');
+        assert.strictEqual(matches[0].target.COD_CIDADAO, '123');
+        assert.strictEqual(matches[0].cohort.GENERO, 'M');
+        assert.strictEqual(matches[0].target.SEXO, 'M');
+    });
+
+    it('deve executar Fellegi-Sunter com pesos agreement/disagreement explícitos', async () => {
+        const cohort = new MockRecordProvider([
+            { ID: '1', UF: 'AC', CIDADE: 'RioBranco' },
+        ]);
+
+        const target = new MockRecordProvider([
+            // UF agree (+10), CIDADE agree (+5) → score = 15, passes threshold 5
+            { ID: '10', UF: 'AC', CIDADE: 'RioBranco' },
+            // UF agree (+10), CIDADE disagree (-3) → score = 7, passes threshold 5
+            { ID: '20', UF: 'AC', CIDADE: 'Macapa' },
+            // UF disagree (-8), CIDADE disagree (-3) → score = -11, below threshold 5
+            { ID: '30', UF: 'AM', CIDADE: 'Belém' },
+        ]);
+
+        const strategy = new LinkageStrategy('FSExplicitTest', index, repository, false);
+
+        strategy.cohort(cohort, { name: 'COHORT' });
+        strategy.link(target, {
+            name: 'TARGET',
+            type: 'probabilistic',
+            scoreStrategy: 'fellegi-sunter',
+            on: { UF: 'UF', CIDADE: 'CIDADE' },
+            blocking: { UF: 'UF' },
+            weights: {
+                UF: { agreement: 10, disagreement: -8 },
+                CIDADE: { agreement: 5, disagreement: -3 },
+            },
+            threshold: 5,
+        });
+
+        await strategy.exec();
+
+        const matches = repository.all;
+        assert.strictEqual(matches.length, 2, 'Deve encontrar 2 matches (score 15 e 7 passam threshold 5)');
+        const ids = matches.map(m => m.target.ID);
+        assert.ok(ids.includes('10'), 'Deve incluir match com score 15');
+        assert.ok(ids.includes('20'), 'Deve incluir match com score 7');
+    });
+
+    it('deve salvar match com dados completos (cohort, target, config, timestamp)', async () => {
+        const cohort = new MockRecordProvider([
+            { ID: '1', UF: 'AC', SEXO: 'M' },
+        ]);
+
+        const target = new MockRecordProvider([
+            { ID: '10', UF: 'AC', SEXO: 'M' },
+        ]);
+
+        const strategy = new LinkageStrategy('FullMatchTest', index, repository, false);
+
+        const linkageConfig = {
+            name: 'TARGET',
+            type: 'deterministic' as const,
+            on: { UF: 'UF', SEXO: 'SEXO' },
+            blocking: { UF: 'UF', SEXO: 'SEXO' } as Record<string, string>,
+        };
+
+        strategy.cohort(cohort, { name: 'COHORT' });
+        strategy.link(target, linkageConfig);
+
+        await strategy.exec();
+
+        const matches = repository.all;
+        assert.strictEqual(matches.length, 1);
+
+        const match = matches[0];
+        assert.deepStrictEqual(match.cohort, { ID: '1', UF: 'AC', SEXO: 'M' });
+        assert.deepStrictEqual(match.target, { ID: '10', UF: 'AC', SEXO: 'M' });
+        assert.strictEqual(match.config.name, 'TARGET');
+        assert.strictEqual(match.config.type, 'deterministic');
+        assert.ok(match.timestamp instanceof Date, 'Timestamp deve ser uma instância de Date');
+  });
 });
