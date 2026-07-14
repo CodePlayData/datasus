@@ -18,6 +18,7 @@
 
 import { MongoClient } from "mongodb";
 import { sia, parser, subset } from "./service.js";
+import { ICD10 } from "@codeplaydata/datasus-core";
 
 const MONGO_URI = 'mongodb://localhost:27017';
 const DB_NAME = 'sim';
@@ -28,10 +29,31 @@ await mongoClient.connect();
 const db = mongoClient.db(DB_NAME);
 const collection = db.collection(COLLECTION_NAME);
 
+const icds = await ICD10.load();
+const respiratoriasECovid = icds.clear().block('J').block('U', {start: '071', end: '072'}).list;
+const tuberculose = icds.clear().block('A', {start: '15', end: '19'}).list;
+
 await sia.subset(subset)
 await sia.exec(
     async (message: any) => {
-        if (message.type === 'metadata') {} else {
+        if (message.type === 'metadata') return;
+
+        const cleanCode = (code: string) => code ? code.trim().toUpperCase().replace(".", "") : "";
+        const causabas = cleanCode(message.CAUSABAS);
+        const linhas = [
+            cleanCode(message.LINHAA),
+            cleanCode(message.LINHAB),
+            cleanCode(message.LINHAC),
+            cleanCode(message.LINHAD),
+            cleanCode(message.LINHAII)
+        ].filter(l => l !== "");
+
+        const causabasMatch = respiratoriasECovid.includes(causabas);
+        const linhasMatch = linhas.some(linha => 
+            respiratoriasECovid.includes(linha) || tuberculose.includes(linha)
+        );
+
+        if (causabasMatch || linhasMatch) {
             await collection.insertOne(message);
         }
     }

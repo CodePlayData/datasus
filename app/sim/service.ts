@@ -32,8 +32,13 @@ if (!(ftpClient instanceof BasicFTPClient)) {
 const gateway = new DATASUSFTPGateway(ftpClient!, '/dissemin/publicos/SIM/CID10/DORES/', new StateYearStrategy());
 
 const criteria = Criteria.set([
-    //new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF'),
-    //new ArrayCriteria(["2270196"], "CODUNI")
+    new ArrayCriteria([
+        "2270196", // Sanatório Penal
+        "6996914", // Frederico Marques
+        "4056167", // São Cristóvão / Benfica
+        "4056310", // UP de Bangu
+        "4056221"  // UP de Água Santa
+    ], "CODESTAB")
 ]);
 
 export const MockedDictionary = new Map<string, (value: any) => any>([

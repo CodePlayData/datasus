@@ -37,6 +37,7 @@ import { StringCriteria } from "./interface/criteria/StringCriteria.js";
 import { ArrayCriteria } from "./interface/criteria/ArrayCriteria.js";
 import { DbcReader } from "./infra/dbc/DbcReader.js";
 import { DbcWriter } from "./infra/dbc/DbcWriter.js";
+import { ICD10 } from "./utils/ICD10.js";
 
 export {
     DATASUSBaseFTPGateway,
@@ -51,6 +52,7 @@ export {
     ArrayCriteria,
     DbcReader,
     DbcWriter,
+    ICD10,
 };
 
 export type {
