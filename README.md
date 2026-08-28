@@ -140,7 +140,7 @@ Cada pasta em `app/` é um pipeline independente para um sistema de informação
 | **SIH** | `app/sihsus/` | State+Period | Sistema de Informações Hospitalares |
 | **SIM** | `app/sim/` | Country+Year | Sistema de Informações sobre Mortalidade |
 | **SINAN** | `app/sinan/` | Country+Year | Agravos de Notificação (ex: tuberculose) |
-| **CNES** | `app/cnes/` | — | Cadastro Nacional de Estabelecimentos de Saúde |
+| **CNES** | `app/cnes/` | State+Period | Cadastro Nacional de Estabelecimentos de Saúde |
 
 **Exemplo — pipeline SIASUS:**
 
@@ -210,6 +210,7 @@ npm run build:app       # Compila as aplicações (app/)
 npm run siasus:main      # Ingestão SIA
 npm run siasus:linkage   # Linkage SIA com outra base
 npm run sinan:main       # Ingestão SINAN
+npm run cnes:main        # Ingestão CNES
 ```
 
 Os pipelines rodam com `--max-old-space-size=4096` para lidar com volumes grandes de dados.

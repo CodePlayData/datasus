@@ -14,13 +14,13 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
-*/
+ */
 
-import { BasicFTPClient, Criteria, StringCriteria, DATASUSFTPGateway, CountryYearStrategy } from "@codeplaydata/datasus-core";
-import { SINANSubset } from "./src/SINANSubset.js";
-import { SINANService } from "./src/SINANService.js";
-import { SINANParser } from "./src/SINANParser.js";
-import { SINANBasicParser } from "./src/SINANBasicParser.js";
+import { BasicFTPClient, Criteria, StringCriteria, DATASUSFTPGateway, StatePeriodStrategy } from "@codeplaydata/datasus-core";
+import { CNESSubset } from "./src/CNESSubset.js";
+import { CNESParser } from "./src/CNESParser.js";
+import { CNESBasicParser } from "./src/CNESBasicParser.js";
+import { CNESService } from "./src/CNESService.js";
 
 const MAX_CONCURRENT_PROCESSES = 4;
 const FTP_HOST = 'ftp.datasus.gov.br';
@@ -28,20 +28,34 @@ export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = new DATASUSFTPGateway(ftpClient, '/dissemin/publicos/SINAN/DADOS/PRELIM/', new CountryYearStrategy());
+const gateway = new DATASUSFTPGateway(ftpClient, '/dissemin/publicos/CNES/200508_/Dados/', new StatePeriodStrategy());
 const criteria = Criteria.set([
-    new StringCriteria("33", "SG_UF_NOT")
+    // new StringCriteria("2270196", "CNES")
 ]);
 
 export const MockedDictionary = new Map<string, (value: any) => any>([
     ['', (value: string) => undefined]
 ]);
 
-export const subset: SINANSubset = { src: 'TUBE', year: [2025] };
-export const parser: SINANParser = SINANBasicParser.instanceOf(MockedDictionary);
-export const sinan = SINANService.init(gateway, {
+export const subset: CNESSubset = {
+    src: 'ST',
+    states: ['RJ'],
+    period: {
+        start: {
+            year: 2024,
+            month: '01'
+        },
+        end: {
+            year: 2024,
+            month: '01'
+        }
+    }
+};
+
+export const parser: CNESParser = CNESBasicParser.instanceOf(MockedDictionary);
+export const cnes = CNESService.init(gateway, {
     filters: criteria.toDTO(),
     concurrency: MAX_CONCURRENT_PROCESSES,
     dataPath: "./data",
-    parser: parser
+    parser: parser,
 });

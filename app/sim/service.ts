@@ -25,7 +25,7 @@ import { SIMService } from "./src/SIMService.js";
 
 const MAX_CONCURRENT_PROCESSES = 4;
 const FTP_HOST = 'ftp.datasus.gov.br';
-const ftpClient = await BasicFTPClient.connect(FTP_HOST);
+export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }

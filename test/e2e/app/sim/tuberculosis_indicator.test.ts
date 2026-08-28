@@ -1,7 +1,7 @@
 import { describe, it, after } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { ICD10 } from '../../../../packages/core/src/index.js';
-import { sia, subset } from '../../../../app/sim/service.js';
+import { sia, subset, ftpClient } from '../../../../app/sim/service.js';
 import { existsSync, mkdirSync } from 'node:fs';
 
 // Garantir que a pasta data exista antes de rodar o teste
@@ -10,6 +10,9 @@ if (!existsSync('./data')) {
 }
 
 describe('E2E: Indicador de Mortalidade por Tuberculose em PPL (SIM)', () => {
+    after(() => {
+        if (ftpClient) ftpClient.close();
+    });
 
     it('deve extrair registros que atendem aos filtros de CNES e CIDs (Respiratórias/Covid e TB)', async () => {
         // 1. Carrega a classe ICD10 e prepara as listas de CIDs
