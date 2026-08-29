@@ -28,7 +28,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Client as FtpClient } from 'basic-ftp/dist/Client.js';
 
-import { BasicFTPClient, DATASUSFTPGateway, StatePeriodStrategy, CountryYearStrategy } from '../../../../packages/core/src/index.js';
+import { BasicFTPClient, DATASUSFTPGateway, StatePeriodStrategy, CountryYearStrategy, StateYearStrategy } from '../../../../packages/core/src/index.js';
 
 // Dados simulando a resposta real do FTP do DataSUS (SIASUS)
 const SIASUS_FTP_LISTING = [
@@ -51,6 +51,17 @@ const SINAN_FTP_LISTING = [
     { name: 'CHIKBR19.dbc', size: 35000000 },
     { name: 'CHIKBR20.dbc', size: 28000000 },
     { name: 'ZIKABR19.dbc', size: 5000000 },
+];
+
+
+// Dados simulando a resposta real do FTP do DataSUS (SINASC)
+const SINASC_FTP_LISTING = [
+    { name: 'DNAC2022.dbc', size: 120000 },
+    { name: 'DNAC2023.dbc', size: 125000 },
+    { name: 'DNAC2024.dbc', size: 128000 },
+    { name: 'DNRJ2022.dbc', size: 2100000 },
+    { name: 'DNRJ2023.dbc', size: 2050000 },
+    { name: 'DNSP2023.dbc', size: 5500000 },
 ];
 
 describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
@@ -226,4 +237,54 @@ describe('Ingestão de Dados (BasicFTPClient + Gateways)', () => {
             );
         });
     });
+
+    describe('DATASUSStateYearFTPGateway (SINASC / SIM)', () => {
+        it('deve filtrar arquivos por src através da cadeia completa', async () => {
+            mock.method(FtpClient.prototype, 'access', async () => {});
+            mock.method(FtpClient.prototype, 'list', async () => SINASC_FTP_LISTING);
+
+            const client = await BasicFTPClient.connect('ftp.datasus.gov.br');
+            const gateway = new DATASUSFTPGateway(client, '/dissemin/publicos/SINASC/1996_/Dados/DNRES/', new StateYearStrategy());
+
+            const result = await gateway.list({ src: 'DN' }, 'short');
+
+            assert.ok(result.length > 0);
+            assert.ok(result.every((name) => name.startsWith('DN')));
+        });
+
+        it('deve filtrar por src, states e year na cadeia completa', async () => {
+            mock.method(FtpClient.prototype, 'access', async () => {});
+            mock.method(FtpClient.prototype, 'list', async () => SINASC_FTP_LISTING);
+
+            const client = await BasicFTPClient.connect('ftp.datasus.gov.br');
+            const gateway = new DATASUSFTPGateway(client, '/path/', new StateYearStrategy());
+
+            const subset = { src: 'DN', states: ['AC'], year: [2023, 2024] };
+            const result = await gateway.list(subset, 'short');
+
+            assert.strictEqual(result.length, 2);
+            assert.ok(result.includes('DNAC2023.dbc'));
+            assert.ok(result.includes('DNAC2024.dbc'));
+            assert.ok(!result.includes('DNAC2022.dbc'));
+            assert.ok(!result.includes('DNRJ2023.dbc'));
+        });
+
+        it('deve delegar o download para o BasicFTPClient.download()', async () => {
+            mock.method(FtpClient.prototype, 'access', async () => {});
+            const downloadSpy = mock.method(FtpClient.prototype, 'downloadTo', async () => {});
+            const dest = join(tmpdir(), `ingestion_sinasc_${Date.now()}.dbc`);
+
+            const client = await BasicFTPClient.connect('ftp.datasus.gov.br');
+            const gateway = new DATASUSFTPGateway(client, '/dissemin/publicos/SINASC/1996_/Dados/DNRES/', new StateYearStrategy());
+
+            await gateway.get('DNAC2024.dbc', dest);
+
+            assert.strictEqual(downloadSpy.mock.callCount(), 1);
+            assert.strictEqual(
+                downloadSpy.mock.calls[0].arguments[1],
+                '/dissemin/publicos/SINASC/1996_/Dados/DNRES/DNAC2024.dbc'
+            );
+        });
+    });
+
 });
