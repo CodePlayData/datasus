@@ -17,8 +17,8 @@
  */
 
 import { SIADatasource } from "./SIADatasource.js";
-import { State } from "./State.js";
-import { Period } from "./Period.js";
+import { State } from "../../shared/State.js";
+import { Period } from "../../shared/Period.js";
 import { Subset } from "@codeplaydata/datasus-core";
 
 export type SIASubset = Subset & { src: SIADatasource }      |

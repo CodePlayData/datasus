@@ -16,9 +16,9 @@
  *     limitations under the License.
 */
 
-import { State } from "./State.js";
+import { State } from "../../shared/State.js";
 import { Subset } from "@codeplaydata/datasus-core";
-import { SIMDatasource } from "./SIMDatasource";
+import { SIMDatasource } from "./SIMDatasource.js";
 
 export type SIMSubset = Subset & { src: SIMDatasource }      |
     { src: SIMDatasource, states: State[] }                  |

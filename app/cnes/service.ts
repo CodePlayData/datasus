@@ -16,11 +16,12 @@
  *     limitations under the License.
  */
 
-import { BasicFTPClient, Criteria, StringCriteria, DATASUSFTPGateway, StatePeriodStrategy } from "@codeplaydata/datasus-core";
+import { BasicFTPClient, Criteria, StringCriteria } from "@codeplaydata/datasus-core";
 import { CNESSubset } from "./src/CNESSubset.js";
 import { CNESParser } from "./src/CNESParser.js";
 import { CNESBasicParser } from "./src/CNESBasicParser.js";
 import { CNESService } from "./src/CNESService.js";
+import { CNESFTPGateway } from "./src/CNESFTPGateway.js";
 
 const MAX_CONCURRENT_PROCESSES = 4;
 const FTP_HOST = 'ftp.datasus.gov.br';
@@ -28,7 +29,7 @@ export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = new DATASUSFTPGateway(ftpClient, '/dissemin/publicos/CNES/200508_/Dados/', new StatePeriodStrategy());
+const gateway = new CNESFTPGateway(ftpClient);
 const criteria = Criteria.set([
     // new StringCriteria("2270196", "CNES")
 ]);

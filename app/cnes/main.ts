@@ -19,7 +19,7 @@
 import { MongoClient } from "mongodb";
 import { cnes, subset } from "./service.js";
 
-const MONGO_URI = 'mongodb://localhost:27017';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'cnes';
 const COLLECTION_NAME = 'estabelecimentos';
 

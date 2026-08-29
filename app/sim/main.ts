@@ -20,7 +20,7 @@ import { MongoClient } from "mongodb";
 import { sia, parser, subset } from "./service.js";
 import { ICD10 } from "@codeplaydata/datasus-core";
 
-const MONGO_URI = 'mongodb://localhost:27017';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'sim';
 const COLLECTION_NAME = 'rj_total';
 

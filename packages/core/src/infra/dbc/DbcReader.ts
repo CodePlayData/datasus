@@ -15,7 +15,7 @@
  *     limitations under the License.
  */
 
-import { statSync, unlink } from "node:fs"
+import { statSync, unlink, openSync, readSync, writeSync, closeSync } from "node:fs"
 import { tmpdir } from "node:os";
 import { parse } from "node:path";
 import { DBFFile, FieldDescriptor } from 'dbffile';
@@ -63,7 +63,26 @@ export class DbcReader {
             //Aqui precisa da mensagem indicando que está descomprimindo e tem que ser um while...
             dbc2dbf(io);
         }
-        let dbf = await DBFFile.open(io.output);
+
+        // Fix header terminator if missing (common in DATASUS DBF files like CNES)
+        try {
+            const fd = openSync(io.output, 'r+');
+            const headerBuf = Buffer.alloc(12);
+            readSync(fd, headerBuf, 0, 12, 0);
+            const headerLength = headerBuf.readInt16LE(8);
+            if (headerLength > 32) {
+                const termBuf = Buffer.alloc(1);
+                readSync(fd, termBuf, 0, 1, headerLength - 1);
+                if (termBuf[0] !== 0x0D) {
+                    writeSync(fd, Buffer.from([0x0D]), 0, 1, headerLength - 1);
+                }
+            }
+            closeSync(fd);
+        } catch (_) {
+            // ignore header fix error if already readable
+        }
+
+        let dbf = await DBFFile.open(io.output, { readMode: 'loose' });
         return new DbcReader(dbf, io)
     }
 

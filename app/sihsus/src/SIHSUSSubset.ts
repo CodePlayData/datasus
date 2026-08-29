@@ -17,8 +17,8 @@
  */
 
 import {Subset} from "@codeplaydata/datasus-core";
-import {State} from "../../siasus/src/State.js";
-import {Period} from "../../siasus/src/Period.js";
+import {State} from "../../shared/State.js";
+import {Period} from "../../shared/Period.js";
 import {SIHSUSDatasource} from "./SIHSUSDatasource.js";
 
 export type SIHSUSSubset = Subset & { src: SIHSUSDatasource } |

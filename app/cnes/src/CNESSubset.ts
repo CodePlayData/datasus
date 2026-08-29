@@ -17,8 +17,8 @@
  */
 
 import { Subset } from "@codeplaydata/datasus-core";
-import { State } from "./State.js";
-import { Period } from "./Period.js";
+import { State } from "../../shared/State.js";
+import { Period } from "../../shared/Period.js";
 import { CNESDatasource } from "./CNESDatasource.js";
 
 export type CNESSubset = Subset & { src: CNESDatasource } |

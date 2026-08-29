@@ -42,11 +42,11 @@ export const subset: SIHSUSSubset = {
     period: {
         start: {
             year: 2026,
-            month: '11'
+            month: '01'
         },
         end: {
             year: 2026,
-            month: '04'
+            month: '01'
         }
     }
 };

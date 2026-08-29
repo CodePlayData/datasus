@@ -121,7 +121,8 @@ export class JobProcessor {
             });
             // Removed the redundant 100% emission because 'finished' will handle it.
             await this.finalize();
-        } catch (_) {
+        } catch (error) {
+            console.error(`[JobProcessor Error]:`, error);
             ProcessFatal.exception(process.pid.toString());
             await this.cleanup(1);
         }
@@ -135,7 +136,8 @@ export class JobProcessor {
             this.summary.total = this.dbc.size;
             // @ts-ignore
             process.send?.({ type: 'progress', status: 'started', file: this.msg.file, pid: process.pid });
-        } catch (_) {
+        } catch (error) {
+            console.error(`[JobProcessor Initialize Error]:`, error);
             ProcessFatal.exception(process.pid.toString());
         }
     }
@@ -146,7 +148,8 @@ export class JobProcessor {
             // @ts-ignore
             process.send?.({ type: 'progress', status: 'finished', summary: this.summary, file: this.msg.file, pid: process.pid, pct: 100 });
             await this.cleanup(0);
-        } catch (_) {
+        } catch (error) {
+            console.error(`[JobProcessor Finalize Error]:`, error);
             ProcessFatal.exception(process.pid.toString());
             await this.cleanup(1);
         }

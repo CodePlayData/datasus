@@ -47,7 +47,7 @@ export const subset: SIASubset = {
     states: ['RJ'],
     period: {
         start: {
-            year: 2024,
+            year: 2026,
             month: '01'
         },
         end: {
