@@ -19,18 +19,17 @@
 import { SIASUSService } from "./src/SIASUSService.js";
 import { BPAIRecord } from "./utils/BPAIRecord.js";
 import { Criteria, BasicFTPClient, ArrayCriteria, StringCriteria, DATASUSFTPGateway, StatePeriodStrategy } from "@codeplaydata/datasus-core";
+import { DATA_PATH, FTP_HOST, FTP_PATHS, MAX_CONCURRENT_PROCESSES } from "../shared/config.js";
 import { SIABasicParser } from "./src/SIABasicParser.js";
 import { CBO } from "./utils/CBO.js";
 import { SIASubset } from "./src/SIASubset.js";
 import { SIGTAP } from "./utils/SIGTAP.js";
 
-const MAX_CONCURRENT_PROCESSES = 6;
-const FTP_HOST = 'ftp.datasus.gov.br';
-export const ftpClient = await BasicFTPClient.connect(FTP_HOST)
+export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = new DATASUSFTPGateway(ftpClient!, '/dissemin/publicos/SIASUS/200801_/Dados/', new StatePeriodStrategy());
+const gateway = new DATASUSFTPGateway(ftpClient!, FTP_PATHS.SIASUS, new StatePeriodStrategy());
 const criteria = Criteria.set([
     new StringCriteria("2270196", "PA_CODUNI"),
     
@@ -61,6 +60,6 @@ export const parser = SIABasicParser.instanceOf(BIDictionary);
 export const sia = SIASUSService.init(gateway, {
     filters: criteria.toDTO(),
     concurrency: MAX_CONCURRENT_PROCESSES,
-    dataPath: "./data",
+    dataPath: DATA_PATH,
     parser: parser
 });

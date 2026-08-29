@@ -17,9 +17,9 @@
 */
 
 import { MongoClient } from "mongodb";
+import { MONGO_URI } from "../shared/config.js";
 import { sinasc, subset } from "./service.js";
 
-const MONGO_URI = 'mongodb://localhost:27017';
 const DB_NAME = 'sinasc';
 const COLLECTION_NAME = 'rj_total';
 

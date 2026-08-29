@@ -18,11 +18,10 @@
 
 import { MongoClient } from "mongodb";
 import { LinkageStrategy } from "@codeplaydata/datasus-linkage";
+import { MONGO_URI } from "../shared/config.js";
 import { TmpMongoIndex } from "../shared/tmdb/TmpMongoIndex.js";
 import { TmpMongoMatchRepository } from "../shared/tmdb/TmpMongoMatchRepository.js";
 import { parser, sia, subset } from "./service.js";
-
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'datasus';
 const INDEX_COLLECTION = 'linkage_index';
 const MATCHES_COLLECTION = 'linkage_matches';

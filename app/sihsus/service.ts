@@ -17,18 +17,17 @@
 */
 
 import { BasicFTPClient, Criteria, StringCriteria, DATASUSFTPGateway, StatePeriodStrategy } from "@codeplaydata/datasus-core";
+import { DATA_PATH, FTP_HOST, FTP_PATHS, MAX_CONCURRENT_PROCESSES } from "../shared/config.js";
 import { SIHSUSSubset } from "./src/SIHSUSSubset.js";
 import { SIHSUSParser } from "./src/SIHSUSParser.js"
 import { SIHSUSBasicParser } from "./src/SIHSUSBasicParser.js"
 import { SIHSUSService } from "./src/SIHSUSService.js";
 
-const MAX_CONCURRENT_PROCESSES = 4;
-const FTP_HOST = 'ftp.datasus.gov.br';
 export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = new DATASUSFTPGateway(ftpClient, '/dissemin/publicos/SIHSUS/200801_/Dados/', new StatePeriodStrategy());
+const gateway = new DATASUSFTPGateway(ftpClient, FTP_PATHS.SIHSUS, new StatePeriodStrategy());
 const criteria = Criteria.set([
     new StringCriteria("2270196", "CNES")
 ])
@@ -55,6 +54,6 @@ export const parser: SIHSUSParser = SIHSUSBasicParser.instanceOf(MockedDictionar
 export const sihsus = SIHSUSService.init(gateway, {
     filters: criteria.toDTO(),
     concurrency: MAX_CONCURRENT_PROCESSES,
-    dataPath: "./data",
+    dataPath: DATA_PATH,
     parser: parser,
 });

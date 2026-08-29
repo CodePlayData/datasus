@@ -18,18 +18,16 @@
 
 
 import { Criteria, BasicFTPClient, ArrayCriteria, DATASUSFTPGateway, StateYearStrategy } from "@codeplaydata/datasus-core";
+import { DATA_PATH, FTP_HOST, FTP_PATHS, MAX_CONCURRENT_PROCESSES } from "../shared/config.js";
 import { SIMSubset } from "./src/SIMSubset.js";
 import { SIMBasicParser } from "./src/SIMBasicParser.js";
 import { SIMService } from "./src/SIMService.js";
 
-
-const MAX_CONCURRENT_PROCESSES = 4;
-const FTP_HOST = 'ftp.datasus.gov.br';
 export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = new DATASUSFTPGateway(ftpClient!, '/dissemin/publicos/SIM/CID10/DORES/', new StateYearStrategy());
+const gateway = new DATASUSFTPGateway(ftpClient!, FTP_PATHS.SIM, new StateYearStrategy());
 
 const criteria = Criteria.set([
     new ArrayCriteria([
@@ -55,6 +53,6 @@ export const parser = SIMBasicParser.instanceOf(MockedDictionary);
 export const sia = SIMService.init(gateway, {
     filters: criteria.toDTO(),
     concurrency: MAX_CONCURRENT_PROCESSES,
-    dataPath: "./data",
+    dataPath: DATA_PATH,
     parser: parser,
 });

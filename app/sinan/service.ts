@@ -17,18 +17,17 @@
 */
 
 import { BasicFTPClient, Criteria, StringCriteria, DATASUSFTPGateway, CountryYearStrategy } from "@codeplaydata/datasus-core";
+import { DATA_PATH, FTP_HOST, FTP_PATHS, MAX_CONCURRENT_PROCESSES } from "../shared/config.js";
 import { SINANSubset } from "./src/SINANSubset.js";
 import { SINANService } from "./src/SINANService.js";
 import { SINANParser } from "./src/SINANParser.js";
 import { SINANBasicParser } from "./src/SINANBasicParser.js";
 
-const MAX_CONCURRENT_PROCESSES = 4;
-const FTP_HOST = 'ftp.datasus.gov.br';
 export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = new DATASUSFTPGateway(ftpClient, '/dissemin/publicos/SINAN/DADOS/PRELIM/', new CountryYearStrategy());
+const gateway = new DATASUSFTPGateway(ftpClient, FTP_PATHS.SINAN, new CountryYearStrategy());
 const criteria = Criteria.set([
     new StringCriteria("33", "SG_UF_NOT")
 ]);
@@ -42,6 +41,6 @@ export const parser: SINANParser = SINANBasicParser.instanceOf(MockedDictionary)
 export const sinan = SINANService.init(gateway, {
     filters: criteria.toDTO(),
     concurrency: MAX_CONCURRENT_PROCESSES,
-    dataPath: "./data",
+    dataPath: DATA_PATH,
     parser: parser
 });

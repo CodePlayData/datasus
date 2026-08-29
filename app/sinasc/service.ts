@@ -17,18 +17,17 @@
 */
 
 import { Criteria, BasicFTPClient, ArrayCriteria, StringCriteria, DATASUSFTPGateway, StateYearStrategy } from "@codeplaydata/datasus-core";
+import { DATA_PATH, FTP_HOST, FTP_PATHS, MAX_CONCURRENT_PROCESSES } from "../shared/config.js";
 import { SINASCSubset } from "./src/SINASCSubset.js";
 import { SINASCBasicParser } from "./src/SINASCBasicParser.js";
 import { SINASCService } from "./src/SINASCService.js";
 
-const MAX_CONCURRENT_PROCESSES = 4;
-const FTP_HOST = 'ftp.datasus.gov.br';
-const ftpClient = await BasicFTPClient.connect(FTP_HOST);
+export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = new DATASUSFTPGateway(ftpClient!, '/dissemin/publicos/SINASC/1996_/Dados/DNRES/', new StateYearStrategy());
 
+const gateway = new DATASUSFTPGateway(ftpClient!, FTP_PATHS.SINASC, new StateYearStrategy());
 const criteria = Criteria.set([
     // Exemplo: novos filtros específicos podem ser definidos aqui
 ]);
@@ -47,6 +46,6 @@ export const parser = SINASCBasicParser.instanceOf(MockedDictionary);
 export const sinasc = SINASCService.init(gateway, {
     filters: criteria.toDTO(),
     concurrency: MAX_CONCURRENT_PROCESSES,
-    dataPath: "./data",
+    dataPath: DATA_PATH,
     parser: parser,
 });

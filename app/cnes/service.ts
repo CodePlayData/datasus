@@ -17,14 +17,13 @@
  */
 
 import { BasicFTPClient, Criteria, StringCriteria } from "@codeplaydata/datasus-core";
+import { DATA_PATH, FTP_HOST, MAX_CONCURRENT_PROCESSES } from "../shared/config.js";
 import { CNESSubset } from "./src/CNESSubset.js";
 import { CNESParser } from "./src/CNESParser.js";
 import { CNESBasicParser } from "./src/CNESBasicParser.js";
 import { CNESService } from "./src/CNESService.js";
 import { CNESFTPGateway } from "./src/CNESFTPGateway.js";
 
-const MAX_CONCURRENT_PROCESSES = 4;
-const FTP_HOST = 'ftp.datasus.gov.br';
 export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
@@ -57,6 +56,6 @@ export const parser: CNESParser = CNESBasicParser.instanceOf(MockedDictionary);
 export const cnes = CNESService.init(gateway, {
     filters: criteria.toDTO(),
     concurrency: MAX_CONCURRENT_PROCESSES,
-    dataPath: "./data",
+    dataPath: DATA_PATH,
     parser: parser,
 });
