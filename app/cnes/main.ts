@@ -19,15 +19,14 @@
 import { MongoClient } from "mongodb";
 import { MONGO_URI } from "../shared/config.js";
 import { cnes, subset } from "./service.js";
-const DB_NAME = 'cnes';
-const COLLECTION_NAME = 'estabelecimentos';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
-const db = mongoClient.db(DB_NAME);
-const collection = db.collection(COLLECTION_NAME);
+const db = mongoClient.db("cnes");
+const collection = db.collection("estabelecimentos");
 
 await cnes.subset(subset);
+
 await cnes.exec(
     async (message: any) => {
         if (message.type === 'metadata') {} else {

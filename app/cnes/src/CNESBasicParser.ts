@@ -31,7 +31,6 @@ export class CNESBasicParser implements CNESParser {
 
     parse(record: Records): Records {
         this.record = record;
-
         for (const [field, value] of Object.entries(this.record)) {
             const parser = this.dictionary.get(field);
             if (parser && value !== undefined) {

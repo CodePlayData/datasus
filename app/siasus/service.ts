@@ -17,7 +17,7 @@
 */
 
 import { SIASUSService } from "./src/SIASUSService.js";
-import { BPAIRecord } from "./utils/BPAIRecord.js";
+import { BIRecord } from "./utils/BIRecord.js";
 import { Criteria, BasicFTPClient, ArrayCriteria, StringCriteria, DATASUSFTPGateway, StatePeriodStrategy } from "@codeplaydata/datasus-core";
 import { DATA_PATH, FTP_HOST, FTP_PATHS, MAX_CONCURRENT_PROCESSES } from "../shared/config.js";
 import { SIABasicParser } from "./src/SIABasicParser.js";
@@ -33,8 +33,8 @@ const gateway = new DATASUSFTPGateway(ftpClient!, FTP_PATHS.SIASUS, new StatePer
 const criteria = Criteria.set([
     new StringCriteria("2270196", "PA_CODUNI"),
     
-    //new ArrayCriteria<BPAIRecord>(Object.values(CBO), 'CBOPROF'),
-    //new ArrayCriteria<BPAIRecord>(Object.values(SIGTAP), "PROC_ID")
+    //new ArrayCriteria<BIRecord>(Object.values(CBO), 'CBOPROF'),
+    //new ArrayCriteria<BIRecord>(Object.values(SIGTAP), "PROC_ID")
 ]);
 
 export const BIDictionary = new Map<string, (value: any) => any>([

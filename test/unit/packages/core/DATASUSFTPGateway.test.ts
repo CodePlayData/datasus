@@ -16,24 +16,26 @@
  *     limitations under the License.
  */
 
-import { describe, it, mock, afterEach } from 'node:test';
+import { describe, it, mock, beforeEach } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { DATASUSFTPGateway } from '../../../../packages/core/src/interface/gateway/DATASUSFTPGateway.js';
+import { SubdirectoryPathPlugin } from '../../../../packages/core/src/interface/gateway/plugins/SubdirectoryPathPlugin.js';
 
 describe('DATASUSFTPGateway', () => {
-    const mockFTPClient = {
-        list: mock.fn(async () => [
-            { name: 'SIA/SP2401.dbc' },
-            { name: 'SIA/RJ2401.dbc' },
-            { name: 'SIH/SP2401.dbc' }
-        ]),
-        connect: mock.fn(),
-        download: mock.fn(),
-        close: mock.fn()
-    };
+    let mockFTPClient: any;
 
-    afterEach(() => {
-        mock.restoreAll();
+    beforeEach(() => {
+        mockFTPClient = {
+            list: mock.fn(async () => [
+                { name: 'SIA/SP2401.dbc' },
+                { name: 'SIA/RJ2401.dbc' },
+                { name: 'SIH/SP2401.dbc' },
+                { name: 'STRJ2401.dbc' }
+            ]),
+            connect: mock.fn(),
+            download: mock.fn(async () => true),
+            close: mock.fn()
+        };
     });
 
     it('deve delegar listagem de arquivos para a estratégia de nomenclatura', async () => {
@@ -41,10 +43,30 @@ describe('DATASUSFTPGateway', () => {
             buildPrefixes: mock.fn((input: any) => [`${input.src}${input.state}`])
         };
 
-        const gateway = new DATASUSFTPGateway(mockFTPClient as any, '/dir', mockStrategy);
+        const gateway = new DATASUSFTPGateway(mockFTPClient, '/dir', mockStrategy);
         const result = await gateway.list({ src: 'SIA/', state: 'SP' }, 'short');
 
         assert.strictEqual(mockStrategy.buildPrefixes.mock.calls.length, 1);
         assert.deepStrictEqual(result, ['SIA/SP2401.dbc']);
+    });
+
+    it('deve aplicar plugins para interceptar caminho no list() e get()', async () => {
+        const mockStrategy = {
+            buildPrefixes: mock.fn((input: any) => [`${input.src}RJ`])
+        };
+
+        const gateway = new DATASUSFTPGateway(
+            mockFTPClient,
+            '/cnes/',
+            mockStrategy,
+            [new SubdirectoryPathPlugin()]
+        );
+
+        await gateway.list({ src: 'ST' }, 'short');
+        assert.strictEqual(mockFTPClient.list.mock.calls[0].arguments[0], '/cnes/ST/');
+
+        await gateway.get('STRJ2401.dbc', './dest/STRJ2401.dbc');
+        assert.strictEqual(mockFTPClient.download.mock.calls[0].arguments[0], './dest/STRJ2401.dbc');
+        assert.strictEqual(mockFTPClient.download.mock.calls[0].arguments[1], '/cnes/ST/STRJ2401.dbc');
     });
 });

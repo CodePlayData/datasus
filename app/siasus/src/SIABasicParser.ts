@@ -16,7 +16,6 @@
  *     limitations under the License.
  */
 
-// TODO: fazer teste unitário
 import { Parser, Records } from "@codeplaydata/datasus-core";
 
 export class SIABasicParser implements Parser<Records> {
@@ -40,7 +39,6 @@ export class SIABasicParser implements Parser<Records> {
                 (this.record as any)[field] = parser(value);
             }
         }
-
         return this.record;
     }
 }

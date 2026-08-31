@@ -16,37 +16,11 @@
  *     limitations under the License.
  */
 
-import { DATASUSBaseFTPGateway, StatePeriodStrategy, FTPClient } from "@codeplaydata/datasus-core";
+import { DATASUSFTPGateway, StatePeriodStrategy, SubdirectoryPathPlugin, FTPClient } from "@codeplaydata/datasus-core";
 import { CNESSubset } from "./CNESSubset.js";
 
-export class CNESFTPGateway extends DATASUSBaseFTPGateway<CNESSubset> {
-    private currentSrc: string = 'ST';
-    private readonly strategy: StatePeriodStrategy;
-
-    constructor(
-        client: FTPClient, 
-        PATH: string = '/dissemin/publicos/CNES/200508_/Dados/'
-    ) {
-        super(client, PATH.endsWith('/') ? PATH : `${PATH}/`);
-        this.strategy = new StatePeriodStrategy();
-    }
-
-    async list(input: CNESSubset, display: 'full' | 'short' = 'full') {
-        this.currentSrc = input.src;
-        const subPath = `${this.PATH}${input.src}/`;
-        let list = await this.client.list(subPath);
-        const prefixes = this.strategy.buildPrefixes(input);
-
-        list = prefixes.map(prefix => {
-            return list.filter((i: { name: string }) => i.name.startsWith(prefix));
-        }).flat();
-
-        return display === 'full' ? list : list.map((item: any) => item.name);
-    }
-
-    async get(file: string, dest?: string) {
-        const src = this.currentSrc || file.slice(0, 2);
-        const remotePath = `${this.PATH}${src}/${file}`;
-        return await this.client?.download(dest || file, remotePath);
+export class CNESFTPGateway extends DATASUSFTPGateway<CNESSubset> {
+    constructor(client: FTPClient, PATH: string = '/dissemin/publicos/CNES/200508_/Dados/') {
+        super(client, PATH, new StatePeriodStrategy(), [new SubdirectoryPathPlugin()]);
     }
 }

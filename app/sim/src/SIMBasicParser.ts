@@ -22,8 +22,7 @@ import { SIMParser } from "./SIMParser.js";
 export class SIMBasicParser implements SIMParser {
     record: Records | undefined;
     
-        private constructor(readonly dictionary: Map<string, (value: any) => any>) {
-        }
+        private constructor(readonly dictionary: Map<string, (value: any) => any>) { }
     
         static instanceOf(dictionary: Map<string, (value: any) => any>) {
             return new SIMBasicParser(dictionary);

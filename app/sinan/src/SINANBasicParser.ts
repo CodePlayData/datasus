@@ -41,7 +41,6 @@ export class SINANBasicParser implements SINANParser {
                 (this.record as any)[field] = parser(value);
             }
         }
-
         return this.record;
     }
 }

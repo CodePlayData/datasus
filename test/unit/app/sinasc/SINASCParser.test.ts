@@ -1,5 +1,5 @@
 import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import { strict as assert } from 'node:assert';
 import { SINASCBasicParser } from '../../../../app/sinasc/src/SINASCBasicParser.js';
 
 describe('SINASCBasicParser', () => {

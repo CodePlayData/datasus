@@ -22,8 +22,7 @@ import { SIHSUSParser } from "./SIHSUSParser.js";
 export class SIHSUSBasicParser implements SIHSUSParser {
     record: Records | undefined;
 
-    private constructor(readonly dictionary: Map<string, (value: any) => any>) {
-    }
+    private constructor(readonly dictionary: Map<string, (value: any) => any>) { }
 
     static instanceOf(dictionary: Map<string, (value: any) => any>) {
         return new SIHSUSBasicParser(dictionary);
@@ -31,7 +30,6 @@ export class SIHSUSBasicParser implements SIHSUSParser {
 
     parse(record: Records): Records {
         this.record = record;
-
         for (const [field, value] of Object.entries(this.record)) {
             const parser = this.dictionary.get(field);
             if (parser && value !== undefined) {

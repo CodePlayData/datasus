@@ -1,7 +1,7 @@
 // @filename: index.ts
 
 /*
- *     Copyright 2025 Pedro Paulo Teixeira dos Santos
+ *     Copyright 2026 Pedro Paulo Teixeira dos Santos
  *
  *     Licensed under the Apache License, Version 2.0 (the "License");
  *     you may not use this file except in compliance with the License.
@@ -24,11 +24,13 @@ import type { Parser } from "./interface/utils/Parser.js";
 import type { NamingStrategy } from "./interface/gateway/NamingStrategy.js";
 import type { Pipeline } from "./interface/pipeline/Pipeline.js";
 import type { Datasource } from "./core/Datasource.js";
+import type { FTPGatewayPlugin } from "./interface/gateway/FTPGatewayPlugin.js";
 
 import { BasicFTPClient } from "./infra/ftp/BasicFTPClient.js";
 import { JobOrchestrator } from "./infra/job/JobOrchestrator.js";
 import { DATASUSBaseFTPGateway } from "./interface/gateway/DATASUSBaseFTPGateway.js";
 import { DATASUSFTPGateway } from "./interface/gateway/DATASUSFTPGateway.js";
+import { SubdirectoryPathPlugin } from "./interface/gateway/plugins/SubdirectoryPathPlugin.js";
 import { StatePeriodStrategy } from "./interface/gateway/strategies/StatePeriodStrategy.js";
 import { CountryYearStrategy } from "./interface/gateway/strategies/CountryYearStrategy.js";
 import { StateYearStrategy } from "./interface/gateway/strategies/StateYearStrategy.js";
@@ -42,6 +44,7 @@ import { ICD10 } from "./utils/ICD10.js";
 export {
     DATASUSBaseFTPGateway,
     DATASUSFTPGateway,
+    SubdirectoryPathPlugin,
     StatePeriodStrategy,
     CountryYearStrategy,
     StateYearStrategy,
@@ -60,6 +63,7 @@ export type {
     Subset,
     FTPClient,
     DATASUSGateway,
+    FTPGatewayPlugin,
     Parser,
     NamingStrategy,
     Pipeline,

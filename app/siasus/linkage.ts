@@ -22,24 +22,19 @@ import { MONGO_URI } from "../shared/config.js";
 import { TmpMongoIndex } from "../shared/tmdb/TmpMongoIndex.js";
 import { TmpMongoMatchRepository } from "../shared/tmdb/TmpMongoMatchRepository.js";
 import { parser, sia, subset } from "./service.js";
-const DB_NAME = 'datasus';
-const INDEX_COLLECTION = 'linkage_index';
-const MATCHES_COLLECTION = 'linkage_matches';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
-const db = mongoClient.db(DB_NAME);
-
-const indexCollection = db.collection(INDEX_COLLECTION);
-const matchesCollection = db.collection(MATCHES_COLLECTION);
-
+const db = mongoClient.db("datasus");
+const indexCollection = db.collection("linkage_index");
+const matchesCollection = db.collection("linkage_matches");
 const indexStrategy = new TmpMongoIndex(indexCollection);
 const matchRepository = new TmpMongoMatchRepository(matchesCollection);
-
 const strategy = new LinkageStrategy("Test study", indexStrategy, matchRepository);
 
-await strategy
-    .cohort(sia, { name: "SIASUS", subset, parser })
+await strategy.cohort(sia, { name: "SIASUS", subset, parser })
+console.log('Linkage strategy initialized with MongoDB.');
+await mongoClient.close();
 
 // Example usage (commented out as it requires actual services)
 /*
@@ -48,7 +43,3 @@ await strategy
     .link(serviceB, configB)
     .exec();
 */
-
-console.log('Linkage strategy initialized with MongoDB.');
-
-await mongoClient.close();

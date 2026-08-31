@@ -16,13 +16,6 @@
     limitations under the License.
 */
 
-// E2E: Pipeline CountryYear (fluxo SINAN-like)
-//
-// Exercita o pipeline completo usando o DATASUSCountryYearFTPGateway:
-//   Connect → List → Subset → Download → Process → Write → Read Back
-//
-// Usa ZIKA 2019 como dataset pequeno (~5MB).
-
 import { describe, it, after } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { join } from 'node:path';
@@ -55,18 +48,14 @@ describe('E2E: Pipeline CountryYear (SINAN-like, ZIKA 2019)', () => {
     });
 
     it('deve executar o pipeline completo com gateway CountryYear', async () => {
-        // 1. Setup
         mkdirSync(DATA_DIR, { recursive: true });
         resetDbcWriter();
 
-        // 2. Conexão FTP real
         client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
         assert.ok(client instanceof BasicFTPClient);
 
-        // 3. Gateway CountryYear + Orchestrator
         const gateway = new DATASUSFTPGateway(client, SINAN_PATH, new CountryYearStrategy());
         const orchestrator = JobOrchestrator.init(gateway, { concurrency: 1, dataPath: DATA_DIR, verbose: false });
-
         const subset = { src: 'ZIKA', year: [2019] };
 
         await orchestrator.subset(subset as any);
@@ -77,14 +66,11 @@ describe('E2E: Pipeline CountryYear (SINAN-like, ZIKA 2019)', () => {
             'Todos os arquivos devem começar com ZIKA'
         );
 
-        // 4. Inicializar DbcWriter — usamos campos genéricos que existem em qualquer dataset SINAN
-        //    Primeiro precisamos descobrir os campos; processamos sem writer primeiro
         let firstMetadata: any;
         let totalRecords = 0;
 
         await orchestrator.subset(subset as any); // resetar após inspeção acima
 
-        // 5. Executar pipeline coletando metadata
         await orchestrator.exec(
             async (msg: any) => {
                 if (msg && msg.type === 'metadata') {

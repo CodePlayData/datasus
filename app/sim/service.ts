@@ -22,6 +22,7 @@ import { DATA_PATH, FTP_HOST, FTP_PATHS, MAX_CONCURRENT_PROCESSES } from "../sha
 import { SIMSubset } from "./src/SIMSubset.js";
 import { SIMBasicParser } from "./src/SIMBasicParser.js";
 import { SIMService } from "./src/SIMService.js";
+import { prisonUnits } from "./utils/prison_units.js";
 
 export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
@@ -30,13 +31,7 @@ if (!(ftpClient instanceof BasicFTPClient)) {
 const gateway = new DATASUSFTPGateway(ftpClient!, FTP_PATHS.SIM, new StateYearStrategy());
 
 const criteria = Criteria.set([
-    new ArrayCriteria([
-        "2270196", // Sanatório Penal
-        "6996914", // Frederico Marques
-        "4056167", // São Cristóvão / Benfica
-        "4056310", // UP de Bangu
-        "4056221"  // UP de Água Santa
-    ], "CODESTAB")
+    new ArrayCriteria(prisonUnits, "CODESTAB")
 ]);
 
 export const MockedDictionary = new Map<string, (value: any) => any>([

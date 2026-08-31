@@ -3,251 +3,142 @@
 [![npm version](https://badge.fury.io/js/@codeplaydata%2Fdatasus.svg)](https://www.npmjs.com/package/@codeplaydata/datasus)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-Monorepo para **ingestão, processamento e vinculação de microdados do DATASUS** (Sistema Único de Saúde do Brasil).
+Monorepo TypeScript de alta performance para **ingestão, processamento paralelo, filtragem, vinculação de registros (record linkage) e cálculo de indicadores de saúde pública** a partir dos microdados abertos do **DATASUS** (Sistema Único de Saúde do Brasil).
 
-O sistema faz o download de arquivos `.DBC` compactados do FTP do DATASUS, descomprime para `.DBF`, lê registro a registro, aplica filtros, e persiste. Tudo orquestrado por um sistema de jobs com processamento paralelo em processos filhos.
+O ecossistema realiza o download automatizado de arquivos `.DBC` compactados diretamente do servidor FTP do Ministério da Saúde, descomprime para `.DBF`, executa leitura registro a registro via workers paralelos (`child_process`), aplica critérios avançados de filtragem e sanitização, transforma os dados via parsers customizáveis, calcula indicadores de saúde pública e possibilita o relacionamento probabilístico entre diferentes sistemas de informação em saúde.
 
-## Visão geral do fluxo
+> [!TIP]
+> Para exemplos diretos de código e comandos de execução, consulte o [HOW_TO.md](HOW_TO.md).
+
+---
+
+## Sumário
+
+- [Visão Geral do Fluxo](#visão-geral-do-fluxo)
+- [Estrutura do Monorepo](#estrutura-do-monorepo)
+  - [@codeplaydata/datasus-core](#codeplaydatadatasus-core)
+  - [@codeplaydata/datasus-linkage](#codeplaydatadatasus-linkage)
+- [Aplicações e Sistemas Suportados](#aplicações-e-sistemas-suportados)
+- [Motor de Indicadores de Saúde Pública](#motor-de-indicadores-de-saúde-pública)
+- [Guia de Execução (HOW TO)](#guia-de-execução-how-to)
+- [Dependências Externas](#dependências-externas)
+- [Licença](#licença)
+
+---
+
+## Visão Geral do Fluxo
 
 ```
-FTP DATASUS  →  .DBC  →  .DBF  →  registros (record-by-record)  →  filtros  →  parser  →  persistência
-   ↑               ↑        ↑                                    ↑
-  Gateway       DbcWriter  dbffile                          Criteria
-                DbcReader
+FTP DATASUS  →  .DBC  →  .DBF  →  Registros (Stream)  →  Filtros (Criteria)  →  Parser  →  Persistência / Linkage / Indicadores
+    ↑               ↑        ↑                                  ↑
+ Gateway FTP    DbcWriter  dbffile                        String/Array
+ (Strategies)   DbcReader                              (Worker Paralelo)
 ```
 
-## Pacotes
+---
+
+## Estrutura do Monorepo
 
 ### `@codeplaydata/datasus-core`
 
-Biblioteca central que gerencia todo o pipeline de ingestão de dados. Não é apenas descompressão — é um **sistema de orquestração de jobs paralelos**.
+O núcleo da plataforma. Gerencia todo o pipeline de ingestão e orquestração de processamento paralelo distribuído entre múltiplos núcleos de CPU.
 
-**O que faz:**
+- **Gateways FTP com Estratégias Pluggáveis e Plugins Interceptores:**
+  - `StatePeriodStrategy`: Particionamento por UF e Período (mês/ano) — utilizado por SIA, SIH e CNES.
+  - `CountryYearStrategy`: Particionamento por Ano em âmbito nacional — utilizado por SINAN.
+  - `StateYearStrategy`: Particionamento por UF e Ano — utilizado por SIM e SINASC.
+  - `FTPGatewayPlugin` / `SubdirectoryPathPlugin`: Interceptação extensível de caminhos remotos para diretórios hierárquicos e subpastas no FTP (utilizado por CNES).
+- **Motor DBC / DBF:**
+  - `DbcReader`: Descompressão de `.DBC` para `.DBF` e streaming registro a registro.
+  - `DbcWriter`: Agrupamento em buffer, escrita em lote em `.DBF` e recompactação para `.DBC`.
+- **Orquestrador de Jobs Concorrentes:**
+  - `JobOrchestrator`: Ponto de entrada de alto nível. Lista arquivos remotos, particiona em chunks e coordena a execução.
+  - `JobScheduler`: Agenda e despacha chunks de arquivos para subprocessos (`child_process.fork`).
+  - `JobRunner`: Gerencia o ciclo de vida dos processos filhos e comunica via IPC (progresso, metadados e registros).
+  - `JobProcessor`: Executado no processo filho. Descomprime, itera e aplica os filtros antes de transferir dados ao processo pai.
+- **Sistema de Filtragem Declarativa (`Criteria`):**
+  - `StringCriteria`: Validação por igualdade estrita de string.
+  - `ArrayCriteria`: Validação de pertinência em conjunto de valores (`includes`).
+  - `CriteriaSet`: Combinação lógica (AND) de múltiplos critérios de seleção.
+- **Tabelas de Referência e Metadados:**
+  - `ICD10`: Utilitário para manipulação, seleção por blocos/capítulos e validação de códigos da CID-10.
 
-1. **Gateway FTP** — conecta ao FTP do DATASUS, lista arquivos disponíveis e realiza downloads. Dois padrões de listagem:
-   - `DATASUSStatePeriodFTPGateway` — filtra por UF + período (mês/ano), usado por SIA, SIH
-   - `DATASUSCountryYearFTPGateway` — filtra por ano (arquivos nacionais), usado por SIM, SINAN
-
-2. **Gerenciamento de arquivos DBC/DBF** — `DbcReader` descomprime `.DBC` → `.DBF` e itera registro a registro. `DbcWriter` faz o inverso: acumula registros em buffer, escreve em `.DBF` por batch (2000 registros), e recompacta para `.DBC`.
-
-3. **Orquestração de jobs** — o coração do pacote:
-   - `JobOrchestrator` — entry point. Recebe um Gateway e um Subset, lista arquivos, divide em chunks, baixa tudo, e dispara os jobs em paralelo
-   - `JobScheduler` — agendamento de chunks. Para cada chunk de arquivos, dispara `JobRunner` para cada arquivo via `child_process.fork()`
-   - `JobRunner` — gerencia processos filhos. Forca `job.js`, envia `JobMessage` (arquivo, filtros, parser, dataPath), e recebe de volta: progresso (percentual), metadados (campos do DBF), e os registros filtrados
-   - `JobProcessor` — roda no processo filho. Abre o `.DBC` via `DbcReader`, itera registro a registro, aplica os `Criteria`, e emite para o processo pai via IPC
-   - `SplitIntoChunks` — divide a lista de arquivos em batches conforme o nível de concorrência configurado
-
-4. **Filtragem** — sistema de `Criteria` para filtrar registros durante a leitura:
-    - `StringCriteria` — campo deve ser igual a um valor
-    - `ArrayCriteria` — campo deve estar em um array de valores
-    - `CriteriaSet` — combina múltiplos critérios (todos devem passar)
-
-    ```typescript
-    filters: [
-        { type: 'string', prop: 'SEXO', value: '2' },
-        { type: 'array', prop: 'CGES', value: ['01', '02', '03'] },
-    ]
-    ```
-
-5. **Parser** — interface `Parser<Records>` para transformar registros antes de emití-los, com dicionário de funções por campo.
-
-**Configuração de jobs (`JobConfig`):**
-
-| Propriedade | Descrição |
-|-------------|-----------|
-| `dataPath` | Caminho local para salvar/baixar arquivos |
-| `concurrency` | Número máximo de processos filhos em paralelo |
-| `verbose` | Exibir progresso e resumo no console |
-| `filters` | Array de `CriteriaObject` para filtragem |
-| `parser` | Parser opcional para transformar registros |
-| `jobScript` | Script customizado do worker (default: `job.js` do próprio pacote) |
+---
 
 ### `@codeplaydata/datasus-linkage`
 
-Biblioteca para **vinculação de registros** (record linkage) entre dois conjuntos de dados do SUS. Implementa blocagem (blocking) e comparação determinística ou probabilística.
+Biblioteca especializada em **vinculação de registros (record linkage)** entre diferentes bases de dados do SUS (ex: cruzar mortalidade do SIM com notificações do SINAN ou consultas ambulatoriais do SIA).
 
-**Como funciona:**
+- **Estratégias de Comparação:**
+  - **Determinística:** Correspondência exata por campos-chave (ex: CPF, CNS).
+  - **Probabilística Simples:** Pontuação ponderada com pesos customizados por campo e limiar (threshold).
+  - **Probabilística de Fellegi-Sunter:** Modelo formal de razão de verossimilhança com probabilidades de concordância (\(m\)) e discordância (\(u\)).
+- **Técnicas de Blocagem (Blocking):**
+  - Redução drástica do espaço cartesiano de comparação indexando registros por blocos (ex: UF de residência, município, ano de nascimento, fonética).
+- **Estratégias de Indexação:**
+  - `InMemoryIndex`: Indexação em memória RAM rápida para volumes moderados.
+  - `SortMergeIndex`: Indexação externa baseada em arquivos temporários em disco para grandes volumes.
+  - `InMemoryMatchRepository`: Repositório de armazenamento e consulta dos pares vinculados.
 
-1. Define uma **coorte** (conjunto base de registros, ex: óbitos do SIM)
-2. Indexa os registros da coorte por **chaves de blocagem** (ex: CPF, data de nascimento)
-3. Para cada registro do **conjunto alvo** (ex: ambulatoriais do SIA), busca candidatos pela mesma blocagem
-4. Compara candidatos usando a estratégia configurada:
-   - **Determinística** — match se os campos de blocagem coincidirem
-   - **Probabilística (simple)** — pontuação ponderada por campo, com threshold
-   - **Probabilística (Fellegi-Sunter)** — pesos m/u (agree/disagree) com log likelihood ratio
+---
 
-**Interfaces:**
+## Aplicações e Sistemas Suportados
 
-| Interface | Descrição |
-|-----------|-----------|
-| `IndexStrategy` | Armazena e recupera registros por chave (implementações: in-memory, persistência externa) |
-| `MatchRepository` | Persiste os matches encontrados (implementações: in-memory, persistência externa) |
+Dentro do diretório `app/`, cada módulo representa uma integração completa para um sistema do DATASUS:
 
-**Configuração (`LinkageConfig`):**
+| Sistema | Diretório | Estratégia de Particionamento | Descrição |
+|---------|-----------|-------------------------------|-----------|
+| **SIA** | `app/siasus/` | `StatePeriodStrategy` | Sistema de Informações Ambulatoriais (Produção Ambulatorial `PA`, Boletim de Produção Ambulatorial `BI`, APACs, etc.) |
+| **SIH** | `app/sihsus/` | `StatePeriodStrategy` | Sistema de Informações Hospitalares (Autorizações de Internação Hospitalar - AIH `RD`) |
+| **SIM** | `app/sim/` | `StateYearStrategy` | Sistema de Informações sobre Mortalidade (Declarações de Óbito `DO`) |
+| **SINAN** | `app/sinan/` | `CountryYearStrategy` | Sistema de Informação de Agravos de Notificação (Tuberculose `TBRBR`, Dengue `DENGBR`, etc.) |
+| **SINASC** | `app/sinasc/` | `StateYearStrategy` | Sistema de Informações sobre Nascidos Vivos (Declarações de Nascido Vivo `DN`) |
+| **CNES** | `app/cnes/` | `StatePeriodStrategy` | Cadastro Nacional de Estabelecimentos de Saúde (Leitos `LT`, Serviços `ST`, Estabelecimentos `DC`, Equipes `EQ`) |
 
-| Propriedade | Descrição |
-|-------------|-----------|
-| `name` | Nome do step de linkage |
-| `type` | `deterministic` ou `probabilistic` |
-| `scoreStrategy` | `simple` ou `fellegi-sunter` (apenas probabilístico) |
-| `on` | Mapeamento campo-coorte → campo-alvo para comparação |
-| `blocking` | Mapeamento de campos para blocagem (reduz espaço de busca) |
-| `weights` | Pesos por campo (número simples ou objeto `{m, u}` / `{agreement, disagreement}`) |
-| `threshold` | Limite mínimo para considerar match |
+---
 
-### Exemplo de uso
+## Motor de Indicadores de Saúde Pública
 
-```typescript
-// Ingestão com core
-const orchestrator = JobOrchestrator.init(gateway, {
-    concurrency: 4,
-    verbose: true,
-    dataPath: './data',
-    filters: [{ type: 'string', prop: 'SEXO', value: '2' }],
-    parser: myParser,
-});
+Localizado em `app/shared/indicators/`, o repositório contém uma suíte de cálculo de indicadores de saúde pública:
 
-await orchestrator.subset(mySubset);
-await orchestrator.exec(async (record) => {
-    await persist(record);
-});
+- **Atenção Primária à Saúde - APS (C1 a C7):** Proporção de consultas de pré-natal, exames citopatológicos, vacinação, hipertensão, diabetes, entre outros.
+- **Equipes de Saúde Bucal - eSB (B1 a B6):** Primeira consulta odontológica programática, procedimentos preventivos, tratamentos concluídos e cobertura populacional.
+- **Equipes de Atenção Primária Prisional - eAPP (P1 a P6):** Cobertura e acompanhamento de saúde da Pessoa Privada de Liberdade (PPL), rastreamento e tratamento de tuberculose no sistema prisional.
+- **Consultório na Rua - eCR (CR1 a CR4):** Acompanhamento integral da população em situação de rua, busca ativa e adesão a tratamentos.
+- **Equipes Multiprofissionais - eMulti (M1 a M2):** Ações integradas de matriciamento e atendimentos compartilhados na APS.
 
-// Linkage entre bases
-const strategy = new LinkageStrategy('SIM-SIA', indexStrategy, matchRepository);
+---
 
-strategy
-    .cohort(simService, { name: 'Obitos 2024', subset: simSubset })
-    .link(siaService, {
-        name: 'SIA Match',
-        type: 'probabilistic',
-        scoreStrategy: 'fellegi-sunter',
-        on: { NOME: 'NOME_PACIENTE', DT_NASC: 'DT_NASCTO' },
-        blocking: { UF: 'UF_RES' },
-        weights: { NOME: { m: 0.95, u: 0.05 }, DT_NASC: 3 },
-        threshold: 2,
-    });
+## Guia de Execução (HOW TO)
 
-await strategy.exec();
-```
+Consulte o [HOW_TO.md](HOW_TO.md) para obter instruções detalhadas e trechos de código prontos para execução:
 
-## Aplicações
+| Tópico | Seção no HOW_TO.md |
+|--------|-------------------|
+| Instalar dependências e compilar pacotes | [1. Instalação e Compilação](HOW_TO.md#1-instalação-e-compilação) |
+| Executar testes unitários, integração, e2e e cobertura | [2. Execução de Testes](HOW_TO.md#2-execução-de-testes) |
+| Executar pipelines dos sistemas (SIA, SIH, SIM, SINAN, SINASC, CNES) | [3. Execução dos Pipelines de Ingestão](HOW_TO.md#3-execução-dos-pipelines-de-ingestão) |
+| Customizar parâmetros, subsets, critérios e persistência do SIASUS | [4. Como Customizar e Buscar Dados no SIASUS](HOW_TO.md#4-como-customizar-e-buscar-dados-no-siasus) |
+| Filtrar documentos com `StringCriteria`, `ArrayCriteria` e `ICD10` | [5. Como Filtrar Documentos Segundo Critérios](HOW_TO.md#5-como-filtrar-documentos-segundo-critérios) |
+| Configurar e rodar vinculação de bases (Record Linkage) | [6. Como Executar Vinculação de Registros (Record Linkage)](HOW_TO.md#6-como-executar-vinculação-de-registros-record-linkage) |
+| Executar scripts utilitários e extração de indicadores | [7. Como Executar Scripts de Indicadores e Utilitários](HOW_TO.md#7-como-executar-scripts-de-indicadores-e-utilitários) |
+| Publicar pacotes no registro NPM | [8. Como Publicar os Pacotes no NPM](HOW_TO.md#8-como-publicar-os-pacotes-no-npm) |
 
-Cada pasta em `app/` é um pipeline independente para um sistema de informação do SUS. Cada uma define seu próprio Gateway (FTP), Subset, Parser e Service, e usa o `JobOrchestrator` do core para rodar a ingestão.
+---
 
-| Sistema | Caminho | Gateway | Descrição |
-|---------|---------|---------|-----------|
-| **SIA** | `app/siasus/` | State+Period | Sistema de Informações Ambulatoriais |
-| **SIH** | `app/sihsus/` | State+Period | Sistema de Informações Hospitalares |
-| **SIM** | `app/sim/` | Country+Year | Sistema de Informações sobre Mortalidade |
-| **SINAN** | `app/sinan/` | Country+Year | Agravos de Notificação (ex: tuberculose) |
-| **CNES** | `app/cnes/` | State+Period | Cadastro Nacional de Estabelecimentos de Saúde |
+## Dependências Externas
 
-**Exemplo — pipeline SIASUS:**
+| Pacote | Função no Projeto |
+|--------|-------------------|
+| [`@codeplaydata/dbc2dbf`](https://www.npmjs.com/package/@codeplaydata/dbc2dbf) | Descompressão e recompressão de arquivos `.DBC` proprietários do DATASUS |
+| [`basic-ftp`](https://www.npmjs.com/package/basic-ftp) | Conexão de alto desempenho e streaming seguro com o FTP público do DATASUS |
+| [`dbffile`](https://www.npmjs.com/package/dbffile) | Leitura e escrita otimizada registro a registro de arquivos xBase `.DBF` |
+| [`mongodb`](https://www.npmjs.com/package/mongodb) | Driver oficial para persistência dos documentos filtrados e consolidados |
+| [`tsx`](https://www.npmjs.com/package/tsx) | Execução TypeScript com suporte nativo a ESM e runner de testes |
 
-```typescript
-// service.ts — montagem do orchestrator
-import { SIASUSService } from "./src/SIASUSService.js";
-import { SIAFTPGateway } from "./src/SIAFTPGateway.js";
-import { SIABasicParser } from "./src/SIABasicParser.js";
-import { BasicFTPClient, Criteria, ArrayCriteria } from "@codeplaydata/datasus-core";
-
-const ftpClient = await BasicFTPClient.connect('ftp.datasus.gov.br');
-const gateway = await SIAFTPGateway.getInstanceOf(ftpClient);
-
-const criteria = Criteria.set([
-    new ArrayCriteria(['223', '225', '321'], 'CBOPROF'),
-]);
-
-const parser = SIABasicParser.instanceOf(new Map([
-    ['CNS_PAC', (v: string) => Buffer.from(v).toString("hex")]
-]));
-
-const subset = {
-    src: 'BI' as const,
-    states: ['RJ'],
-    period: {
-        start: { year: 2008, month: '01' },
-        end: { year: 2026, month: '03' },
-    },
-};
-
-const jobConfig = {
-    filters: criteria.toDTO(),
-    concurrency: 6,
-    dataPath: "./data/sia",
-    parser,
-};
-
-const sia = SIASUSService.init(gateway, jobConfig);
-
-// main.ts — execução
-await sia.subset(subset);
-await sia.exec(async (message) => {
-    if (message.type !== 'metadata') {
-        await persist(message);
-    }
-});
-```
-
-## Instalação
-
-```bash
-npm install
-```
-
-## Build
-
-```bash
-npm run build           # Compila todos os pacotes e aplicações
-npm run build:core      # Apenas @codeplaydata/datasus-core
-npm run build:linkage   # Apenas @codeplaydata/datasus-linkage
-npm run build:app       # Compila as aplicações (app/)
-```
-
-## Executar pipelines
-
-```bash
-npm run siasus:main      # Ingestão SIA
-npm run siasus:linkage   # Linkage SIA com outra base
-npm run sinan:main       # Ingestão SINAN
-npm run cnes:main        # Ingestão CNES
-```
-
-Os pipelines rodam com `--max-old-space-size=4096` para lidar com volumes grandes de dados.
-
-## Testes
-
-Bateria de testes organizada em três camadas:
-
-```bash
-npm run test             # Executa tudo: unit → integration → e2e
-npm run test:unit        # Testes unitários (isolados, sem I/O)
-npm run test:integration # Testes de integração (I/O, fixtures, DBF real)
-npm run test:e2e         # Testes end-to-end (pipelines completos, timeout 120s)
-```
-
-**Cobertura:**
-
-- **core** — FTP gateway (state+period, country+year), leitura/escrita DBC, orquestração/scheduling/execução de jobs, filtros (Criteria), chunking, persistência
-- **linkage** — estratégias de match (deterministic, simple, Fellegi-Sunter), índices in-memory e persistência externa, repositório de matches, DbcRecordProvider
-
-## Publicação
-
-```bash
-npm run publish           # Publica todos os pacotes no npm
-npm run publish:core      # Apenas @codeplaydata/datasus-core
-npm run publish:linkage   # Apenas @codeplaydata/datasus-linkage
-```
-
-## Dependências externas
-
-| Pacote | Função |
-|--------|--------|
-| [`@codeplaydata/dbc2dbf`](https://www.npmjs.com/package/@codeplaydata/dbc2dbf) | Conversão `.DBC` ↔ `.DBF` |
-| [`basic-ftp`](https://www.npmjs.com/package/basic-ftp) | Cliente FTP para conectar ao DATASUS |
-| [`dbffile`](https://www.npmjs.com/package/dbffile) | Leitura e escrita de arquivos DBF |
-| [`mongodb`](https://www.npmjs.com/package/mongodb) | Persistência de registros |
+---
 
 ## Licença
 
-[Apache 2.0](LICENSE) — Pedro Paulo dos Santos (dr2p)
+Distribuído sob a licença [Apache 2.0](LICENSE).  
+Copyright (c) 2025-2026 Pedro Paulo Teixeira dos Santos ([@dr2pedro](https://github.com/dr2pedro)).

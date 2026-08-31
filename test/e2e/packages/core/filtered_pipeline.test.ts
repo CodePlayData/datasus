@@ -16,14 +16,6 @@
     limitations under the License.
 */
 
-// E2E: Pipeline com Critérios (filtragem)
-//
-// Estende o pipeline StatePeriod aplicando StringCriteria e ArrayCriteria.
-// Valida que:
-//   1. O número de registros de saída é menor que o total.
-//   2. Todos os registros satisfazem os critérios.
-//   3. O cache de download funciona entre chamadas.
-
 import { describe, it, after, mock } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { join } from 'node:path';
@@ -57,15 +49,12 @@ describe('E2E: Pipeline com Critérios (PA_SEXO=F, PA_UFMUN=120040)', () => {
     });
 
     it('deve filtrar registros E2E e validar consistência da saída', async () => {
-        // 1. Setup
         mkdirSync(DATA_DIR, { recursive: true });
         resetDbcWriter();
 
-        // 2. Conexão FTP real
         client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
         assert.ok(client instanceof BasicFTPClient);
 
-        // 3. Gateway + Orchestrator com critérios de filtragem
         const gateway = new DATASUSFTPGateway(client, SIASUS_PATH, new StatePeriodStrategy());
         const criteria = [
             { type: 'string', prop: 'PA_SEXO', value: 'F' },
@@ -85,7 +74,6 @@ describe('E2E: Pipeline com Critérios (PA_SEXO=F, PA_UFMUN=120040)', () => {
         await orchestrator.subset(subset as any);
         assert.ok(orchestrator.files.length > 0);
 
-        // 4. Inicializar DbcWriter
         const OUTPUT_FIELDS = [
             { name: 'PA_CODUNI', type: 'C' as const, size: 7 },
             { name: 'PA_SEXO', type: 'C' as const, size: 1 },
@@ -95,7 +83,6 @@ describe('E2E: Pipeline com Critérios (PA_SEXO=F, PA_UFMUN=120040)', () => {
 
         let receivedCount = 0;
 
-        // 5. Executar o pipeline com filtros
         await orchestrator.exec(
             async (msg: any) => {
                 if (msg && msg.type === 'metadata') return;
@@ -109,14 +96,11 @@ describe('E2E: Pipeline com Critérios (PA_SEXO=F, PA_UFMUN=120040)', () => {
         );
 
         assert.ok(receivedCount > 0, `Deve ter recebido registros filtrados (recebidos: ${receivedCount})`);
-        // Com filtros, deve ser MUITO menos que 39.306 (total sem filtros)
         assert.ok(receivedCount < 39306, `Filtro deve reduzir registros (${receivedCount} < 39306)`);
 
-        // 6. Fechar o writer
         await writer.close();
         assert.ok(existsSync(OUT_FILE));
 
-        // 7. Read Back — validar que TODOS satisfazem os critérios
         const reader = await DbcReader.load(OUT_FILE);
         let readBackCount = 0;
         await reader.forEachRecords(async (record: any) => {
@@ -131,7 +115,7 @@ describe('E2E: Pipeline com Critérios (PA_SEXO=F, PA_UFMUN=120040)', () => {
         );
     });
 
-    it('não deve rebaixar o arquivo se ele já existe no disco', async () => {
+    it('não deve baixar novamente o arquivo se ele já existe no disco', async () => {
         const downloadedFile = join(DATA_DIR, 'PAAC1001.dbc');
         assert.ok(existsSync(downloadedFile), 'Arquivo deve existir do teste anterior');
 

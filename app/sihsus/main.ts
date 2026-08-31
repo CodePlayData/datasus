@@ -19,13 +19,11 @@
 import { MongoClient } from "mongodb";
 import { MONGO_URI } from "../shared/config.js";
 import { sihsus, subset } from "./service.js";
-const DB_NAME = 'sihsus';
-const COLLECTION_NAME = 'sanatorio_aih_rejeitadas';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
-const db = mongoClient.db(DB_NAME);
-const collection = db.collection(COLLECTION_NAME);
+const db = mongoClient.db("sihsus");
+const collection = db.collection("sanatorio_aih_rejeitadas");
 
 await sihsus.subset(subset)
 await sihsus.exec(

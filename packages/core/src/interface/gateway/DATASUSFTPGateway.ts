@@ -20,18 +20,27 @@ import { DATASUSBaseFTPGateway } from "./DATASUSBaseFTPGateway.js";
 import { NamingStrategy } from "./NamingStrategy.js";
 import { Subset } from "../../core/Subset.js";
 import { FTPClient } from "../../infra/ftp/FTPClient.js";
+import { FTPGatewayPlugin } from "./FTPGatewayPlugin.js";
 
 export class DATASUSFTPGateway<S extends Subset> extends DATASUSBaseFTPGateway<S> {
     constructor(
         client: FTPClient,
         PATH: string,
-        private readonly strategy: NamingStrategy<S>
+        private readonly strategy: NamingStrategy<S>,
+        private readonly plugins: FTPGatewayPlugin<S>[] = []
     ) {
         super(client, PATH);
     }
 
     async list(input: S, display: 'full' | 'short' = 'full') {
-        let list = await this.client.list(this.PATH);
+        const basePath = this.PATH.endsWith('/') ? this.PATH : `${this.PATH}/`;
+        let targetPath = basePath;
+        for (const plugin of this.plugins) {
+            if (plugin.resolveListPath) {
+                targetPath = plugin.resolveListPath(targetPath, input);
+            }
+        }
+        let list = await this.client.list(targetPath);
         const prefixes = this.strategy.buildPrefixes(input);
 
         list = prefixes.map(prefix => {
@@ -39,5 +48,16 @@ export class DATASUSFTPGateway<S extends Subset> extends DATASUSBaseFTPGateway<S
         }).flat();
 
         return display === 'full' ? list : list.map((item: any) => item.name);
+    }
+
+    override async get(file: string, dest?: string) {
+        const basePath = this.PATH.endsWith('/') ? this.PATH : `${this.PATH}/`;
+        let remotePath = `${basePath}${file}`;
+        for (const plugin of this.plugins) {
+            if (plugin.resolveGetPath) {
+                remotePath = plugin.resolveGetPath(basePath, file);
+            }
+        }
+        return await this.client?.download(dest || file, remotePath);
     }
 }

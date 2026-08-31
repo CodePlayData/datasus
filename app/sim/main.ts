@@ -18,44 +18,32 @@
 
 import { MongoClient } from "mongodb";
 import { MONGO_URI } from "../shared/config.js";
-import { sia, parser, subset } from "./service.js";
-import { ICD10 } from "@codeplaydata/datasus-core";
-const DB_NAME = 'sim';
-const COLLECTION_NAME = 'rj_total';
+import { sia, subset } from "./service.js";
+import { respiratoriasECovid, tuberculose } from "./utils/conditions.js";
+import { SanitizeIcd } from "./utils/sanitizeIcd.js";
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
-const db = mongoClient.db(DB_NAME);
-const collection = db.collection(COLLECTION_NAME);
+const db = mongoClient.db("sim");
+const collection = db.collection("rj_total");
 
-const icds = await ICD10.load();
-const respiratoriasECovid = icds.clear().block('J').block('U', {start: '071', end: '072'}).list;
-const tuberculose = icds.clear().block('A', {start: '15', end: '19'}).list;
+const respiratoriasMatcher = new SanitizeIcd(respiratoriasECovid);
+const tuberculoseMatcher = new SanitizeIcd(tuberculose);
+const linhasFields = ['LINHAA', 'LINHAB', 'LINHAC', 'LINHAD', 'LINHAII'];
 
-await sia.subset(subset)
+await sia.subset(subset);
 await sia.exec(
     async (message: any) => {
         if (message.type === 'metadata') return;
 
-        const cleanCode = (code: string) => code ? code.trim().toUpperCase().replace(".", "") : "";
-        const causabas = cleanCode(message.CAUSABAS);
-        const linhas = [
-            cleanCode(message.LINHAA),
-            cleanCode(message.LINHAB),
-            cleanCode(message.LINHAC),
-            cleanCode(message.LINHAD),
-            cleanCode(message.LINHAII)
-        ].filter(l => l !== "");
-
-        const causabasMatch = respiratoriasECovid.includes(causabas);
-        const linhasMatch = linhas.some(linha => 
-            respiratoriasECovid.includes(linha) || tuberculose.includes(linha)
-        );
+        const causabasMatch = respiratoriasMatcher.test(message, 'CAUSABAS');
+        const linhasMatch = respiratoriasMatcher.test(message, linhasFields) || tuberculoseMatcher.test(message, linhasFields);
 
         if (causabasMatch || linhasMatch) {
             await collection.insertOne(message);
         }
     }
+
 ).finally(
     async () => {
         console.log('Done!');

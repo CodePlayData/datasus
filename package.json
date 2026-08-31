@@ -21,9 +21,12 @@
 
     "test": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:unit": "npx tsx --test test/unit/**/*.test.ts",
+    "test:unit:coverage": "npx tsx --test --experimental-test-coverage test/unit/**/*.test.ts",
     "pretest:integration": "npx tsx test/integration/packages/core/fixtures/download_fixture.ts",
     "test:integration": "npx tsx --test test/integration/**/*.test.ts",
+    "test:integration:coverage": "npx tsx --test --experimental-test-coverage test/integration/**/*.test.ts",
     "test:e2e": "npx tsx --test-timeout 120000 --test test/e2e/**/*.test.ts",
+    "test:coverage": "npm run test:unit:coverage && npm run test:integration:coverage",
 
     "publish": "npm publish --workspaces --access=public",
     "publish:core": "npm publish -w @codeplaydata/datasus-core --access=public",
@@ -39,6 +42,7 @@
   "license": "Apache-2.0",
   "description": "This application decompress the datasus micro data and serve as a gateway class.",
   "devDependencies": {
+    "@types/fhir": "^0.0.44",
     "@types/node": "^22.20.1",
     "mongodb": "^7.0.0",
     "typescript": "^5.8.3"

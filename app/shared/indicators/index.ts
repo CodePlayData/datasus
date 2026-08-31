@@ -1,4 +1,4 @@
-// @filename: TBNot.ts
+// @filename: index.ts
 
 /*
  *     Copyright 2026 Pedro Paulo Teixeira dos Santos
@@ -14,7 +14,13 @@
  *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *     See the License for the specific language governing permissions and
  *     limitations under the License.
-*/
+ */
 
-export type TBNot = {
-}
+export * from './src/types.js';
+export * from './src/PrisonHealthIdentifier.js';
+export * from './src/IndicatorEngine.js';
+export * from './src/definitions/PrisonIndicators.js';
+export * from './src/definitions/PrimaryCareIndicators.js';
+export * from './src/definitions/StreetCareIndicators.js';
+export * from './src/definitions/OralHealthIndicators.js';
+export * from './src/definitions/MultiIndicators.js';

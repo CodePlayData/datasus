@@ -17,6 +17,6 @@
  */
 
 import { DATASUSGateway } from "@codeplaydata/datasus-core";
-import {SIMSubset} from "./SIMSubset";
+import { SIMSubset } from "./SIMSubset.js";
 
 export interface SIMGateway extends DATASUSGateway<SIMSubset> { }

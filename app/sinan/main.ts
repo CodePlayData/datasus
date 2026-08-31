@@ -19,13 +19,11 @@
 import { MongoClient } from "mongodb";
 import { MONGO_URI } from "../shared/config.js";
 import { sinan, subset } from "./service.js";
-const DB_NAME = 'sinan';
-const COLLECTION_NAME = 'tb_rj';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
-const db = mongoClient.db(DB_NAME);
-const collection = db.collection(COLLECTION_NAME);
+const db = mongoClient.db("sinan");
+const collection = db.collection("tb_rj");
 
 await sinan.subset(subset)
 await sinan.exec(

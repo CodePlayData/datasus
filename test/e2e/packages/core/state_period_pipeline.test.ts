@@ -16,13 +16,6 @@
     limitations under the License.
 */
 
-// E2E: Pipeline StatePeriod (fluxo SIASUS-like)
-//
-// Exercita o pipeline completo usando conexão FTP real ao DataSUS:
-//   Connect → List → Subset → Download → Process → Write → Read Back
-//
-// Também valida que o download NÃO bate novamente no FTP se o arquivo já existe.
-
 import { describe, it, after, mock } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { join } from 'node:path';
@@ -51,20 +44,16 @@ describe('E2E: Pipeline StatePeriod (SIASUS-like)', () => {
     after(() => {
         resetDbcWriter();
         if (client) client.close();
-        // Limpa todo o diretório de dados
         if (existsSync(DATA_DIR)) rmSync(DATA_DIR, { recursive: true, force: true });
     });
 
     it('deve executar o pipeline completo: FTP → List → Download → Process → Write → Read', async () => {
-        // 1. Setup
         mkdirSync(DATA_DIR, { recursive: true });
         resetDbcWriter();
 
-        // 2. Conexão FTP real
         client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
         assert.ok(client instanceof BasicFTPClient, 'Deve conectar ao FTP do DataSUS');
 
-        // 3. Gateway + Orchestrator
         const gateway = new DATASUSFTPGateway(client, SIASUS_PATH, new StatePeriodStrategy());
         const orchestrator = JobOrchestrator.init(gateway, { concurrency: 1, dataPath: DATA_DIR, verbose: false });
 
@@ -85,7 +74,6 @@ describe('E2E: Pipeline StatePeriod (SIASUS-like)', () => {
             'PAAC1001.dbc deve estar na lista'
         );
 
-        // 4. Inicializar o DbcWriter
         const OUTPUT_FIELDS = [
             { name: 'PA_CODUNI', type: 'C' as const, size: 7 },
             { name: 'PA_SEXO', type: 'C' as const, size: 1 },
@@ -94,7 +82,6 @@ describe('E2E: Pipeline StatePeriod (SIASUS-like)', () => {
 
         let receivedCount = 0;
 
-        // 5. Executar o pipeline (download real + processamento real)
         await orchestrator.exec(
             async (msg: any) => {
                 if (msg && msg.type === 'metadata') return;
@@ -105,11 +92,9 @@ describe('E2E: Pipeline StatePeriod (SIASUS-like)', () => {
 
         assert.ok(receivedCount > 0, `Deve ter processado registros (recebidos: ${receivedCount})`);
 
-        // 6. Fechar o writer e verificar arquivo de saída
         await writer.close();
         assert.ok(existsSync(OUT_FILE), 'Arquivo .dbc de saída deve existir');
 
-        // 7. Read Back — validar consistência
         const reader = await DbcReader.load(OUT_FILE);
         let readBackCount = 0;
         await reader.forEachRecords(async (record: any) => {
@@ -125,8 +110,6 @@ describe('E2E: Pipeline StatePeriod (SIASUS-like)', () => {
     });
 
     it('não deve baixar novamente do FTP se o arquivo já existe no disco (cache statSync)', async () => {
-        // O teste anterior já baixou PAAC1001.dbc em DATA_DIR.
-        // Verificamos que o arquivo existe.
         const downloadedFile = join(DATA_DIR, 'PAAC1001.dbc');
         assert.ok(existsSync(downloadedFile), 'Arquivo deve existir do teste anterior');
 

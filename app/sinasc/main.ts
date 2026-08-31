@@ -20,13 +20,10 @@ import { MongoClient } from "mongodb";
 import { MONGO_URI } from "../shared/config.js";
 import { sinasc, subset } from "./service.js";
 
-const DB_NAME = 'sinasc';
-const COLLECTION_NAME = 'rj_total';
-
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
-const db = mongoClient.db(DB_NAME);
-const collection = db.collection(COLLECTION_NAME);
+const db = mongoClient.db("sinasc");
+const collection = db.collection("rj_total");
 
 await sinasc.subset(subset);
 await sinasc.exec(

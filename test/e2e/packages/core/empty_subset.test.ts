@@ -16,13 +16,6 @@
     limitations under the License.
 */
 
-// E2E: Resiliência — Subset sem dados
-//
-// Valida que o pipeline NÃO crasheia quando:
-//   1. O subset lista 0 arquivos (estado inexistente).
-//   2. Nenhum job é agendado.
-//   3. O pipeline retorna normalmente.
-
 import { describe, it, after } from 'node:test';
 import { strict as assert } from 'node:assert';
 
@@ -39,15 +32,11 @@ describe('E2E: Resiliência — Subset sem dados', () => {
     });
 
     it('deve completar sem erros quando o subset não encontra arquivos', async () => {
-        // 1. Conexão FTP real
         client = await BasicFTPClient.connect('ftp.datasus.gov.br') as BasicFTPClient;
         assert.ok(client instanceof BasicFTPClient);
 
-        // 2. Gateway + Orchestrator
         const gateway = new DATASUSFTPGateway(client, SIASUS_PATH, new StatePeriodStrategy());
         const orchestrator = JobOrchestrator.init(gateway, { concurrency: 1, verbose: false });
-
-        // Subset com estado inexistente — nenhum arquivo deve ser encontrado
         const subset = {
             src: 'PA',
             states: ['XX'], // Não existe
@@ -59,10 +48,8 @@ describe('E2E: Resiliência — Subset sem dados', () => {
 
         await orchestrator.subset(subset as any);
 
-        // Deve ter listado 0 arquivos
         assert.strictEqual(orchestrator.files.length, 0, 'Não deve encontrar arquivos para estado XX');
 
-        // exec() com 0 arquivos não deve crashar
         let callbackCalled = false;
         await orchestrator.exec(
             async () => { callbackCalled = true; }

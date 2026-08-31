@@ -17,7 +17,7 @@
  */
 
 import { BasicFTPClient, Criteria, StringCriteria } from "@codeplaydata/datasus-core";
-import { DATA_PATH, FTP_HOST, MAX_CONCURRENT_PROCESSES } from "../shared/config.js";
+import { DATA_PATH, FTP_PATHS, FTP_HOST, MAX_CONCURRENT_PROCESSES } from "../shared/config.js";
 import { CNESSubset } from "./src/CNESSubset.js";
 import { CNESParser } from "./src/CNESParser.js";
 import { CNESBasicParser } from "./src/CNESBasicParser.js";
@@ -28,7 +28,7 @@ export const ftpClient = await BasicFTPClient.connect(FTP_HOST);
 if (!(ftpClient instanceof BasicFTPClient)) {
     throw new Error('FTP connection failed');
 }
-const gateway = new CNESFTPGateway(ftpClient);
+const gateway = new CNESFTPGateway(ftpClient, FTP_PATHS.CNES);
 const criteria = Criteria.set([
     // new StringCriteria("2270196", "CNES")
 ]);

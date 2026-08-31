@@ -19,13 +19,11 @@
 import { MongoClient } from "mongodb";
 import { MONGO_URI } from "../shared/config.js";
 import { sia, subset } from "./service.js";
-const DB_NAME = 'siasus';
-const COLLECTION_NAME = 'sanatorio_bpa';
 
 const mongoClient = new MongoClient(MONGO_URI);
 await mongoClient.connect();
-const db = mongoClient.db(DB_NAME);
-const collection = db.collection(COLLECTION_NAME);
+const db = mongoClient.db("siasus");
+const collection = db.collection("sanatorio_bpa");
 
 await sia.subset(subset)
 await sia.exec(

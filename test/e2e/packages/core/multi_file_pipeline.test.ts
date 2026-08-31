@@ -16,13 +16,6 @@
     limitations under the License.
 */
 
-// E2E: Pipeline com Múltiplos Arquivos e Concorrência
-//
-// Valida que o JobOrchestrator gerencia corretamente:
-//   1. Download de múltiplos arquivos (com cache).
-//   2. Divisão em chunks baseado no MAX_CONCURRENT_PROCESSES.
-//   3. Execução paralela de workers reais.
-
 import { describe, it, after } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { join } from 'node:path';
@@ -50,11 +43,8 @@ describe('E2E: Pipeline Múltiplos Arquivos e Concorrência', () => {
         assert.ok(client instanceof BasicFTPClient);
 
         const gateway = new DATASUSFTPGateway(client, SIASUS_PATH, new StatePeriodStrategy());
-        
-        // MAX_CONCURRENT_PROCESSES = 2 para forçar paralelismo
         const orchestrator = JobOrchestrator.init(gateway, { concurrency: 2, dataPath: DATA_DIR, verbose: false });
 
-        // Subset com 2 meses do Acre (PAAC1001.dbc e PAAC1002.dbc)
         const subset = {
             src: 'PA',
             states: ['AC'],
@@ -71,21 +61,18 @@ describe('E2E: Pipeline Múltiplos Arquivos e Concorrência', () => {
         assert.strictEqual(orchestrator.chunks.length, 1, 'Com concorrência 2 e 2 arquivos, deve ter 1 chunk de 2');
 
         let receivedRecords = 0;
+        //TODO: se não estiver sendo usado precisa remover.
         const processedFiles = new Set<string>();
 
         await orchestrator.exec(
             async (msg: any) => {
                 if (msg && msg.type === 'metadata') return;
-                // No core, as mensagens de registro não costumam vir com o nome do arquivo, 
-                // mas as de progresso sim (capturadas internamente pelo JobRunner).
-                // Aqui apenas contamos o total.
                 receivedRecords++;
             }
         );
 
         assert.ok(receivedRecords > 0, `Deve ter processado registros de ambos os arquivos (total: ${receivedRecords})`);
         
-        // Verifica se os dois arquivos estão no disco
         assert.ok(existsSync(join(DATA_DIR, 'PAAC1001.dbc')), 'PAAC1001.dbc deve existir');
         assert.ok(existsSync(join(DATA_DIR, 'PAAC1002.dbc')), 'PAAC1002.dbc deve existir');
     });

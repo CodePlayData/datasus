@@ -1,7 +1,7 @@
-// @filename: BPAIRecord.ts
+// @filename: prison_units.ts
 
 /*
- *     Copyright 2025 Pedro Paulo Teixeira dos Santos
+ *     Copyright 2026 Pedro Paulo Teixeira dos Santos
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
     limitations under the License.
 */
 
-export type BPAIRecord = {
-    CBOPROF: string;
-    CNS_PAC: string;
-    CODUNI: string;
-    [key: string]: any;
-};
+export const prisonUnits = [
+    "2270196", // Sanatório Penal
+    "6996914", // Frederico Marques
+    "4056167", // São Cristóvão / Benfica
+    "4056310", // UP de Bangu
+    "4056221"  // UP de Água Santa
+];

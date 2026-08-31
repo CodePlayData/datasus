@@ -16,18 +16,25 @@
  *     limitations under the License.
 */
 
-import { describe, it } from 'node:test';
+import { describe, it, after } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { existsSync, mkdirSync } from 'node:fs';
-import { sinasc } from '../../../../app/sinasc/service.js';
+import { sinasc, ftpClient } from '../../../../app/sinasc/service.js';
 import { SINASCSubset } from '../../../../app/sinasc/src/SINASCSubset.js';
+import { FHIRStore, SINASCMapper } from '../../../../app/shared/fhir/index.js';
 
 if (!existsSync('./data')) {
     mkdirSync('./data');
 }
 
-describe('E2E: Pipeline SINASC (Nascidos Vivos)', () => {
-    it('deve listar, baixar e processar registros do SINASC (Acre 2024)', async () => {
+describe('E2E (FHIR): Pipeline SINASC (Nascidos Vivos)', () => {
+    const store = new FHIRStore();
+
+    after(() => {
+        if (ftpClient) ftpClient.close();
+    });
+
+    it('deve listar, baixar e processar registros do SINASC mapeando para Patient e Encounter FHIR (Acre 2024)', async () => {
         const subset: SINASCSubset = {
             src: 'DN',
             states: ['AC'],
@@ -53,9 +60,24 @@ describe('E2E: Pipeline SINASC (Nascidos Vivos)', () => {
             }
 
             receivedRecords++;
+
+            // Mapeia para recursos FHIR
+            const patient = SINASCMapper.toPatient(message);
+            const encounter = SINASCMapper.toPrenatalEncounter(message);
+
+            assert.strictEqual(patient.resourceType, 'Patient');
+            assert.strictEqual(encounter.resourceType, 'Encounter');
+
+            store.add(patient);
+            store.add(encounter);
         });
+
+        console.log(`\n[SINASC/FHIR] Total de registros recebidos: ${receivedRecords}`);
+        console.log(`[SINASC/FHIR] Total de recursos Patient mapeados: ${store.getPatients().length}`);
+        console.log(`[SINASC/FHIR] Total de recursos Encounter mapeados: ${store.getEncounters().length}\n`);
 
         assert.ok(receivedMetadata, 'Deve ter recebido metadata');
         assert.ok(receivedRecords > 0, `Deve ter extraído registros de nascidos vivos (total: ${receivedRecords})`);
+        assert.strictEqual(store.getPatients().length, receivedRecords);
     });
 });
